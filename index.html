@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>FinTrack - Tulip Garden Edition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FIREBASE SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --primary: #d946ef;
+      --primary-dark: #a21caf;
+      --primary-light: #fdf4ff;
+      --secondary: #8b5cf6;
+      --accent: #f97316;
+      --bg: #fcf8ff;
+      --card: rgba(255, 255, 255, 0.88);
+      --text: #3b0764;
+      --muted: #86198f;
+      --border: rgba(245, 208, 254, 0.8);
+      --danger: #f43f5e;
+      --success: #10b981;
+      --shadow-sm: 0 8px 25px rgba(217, 70, 239, 0.08);
+      --shadow-glow: 0 0 15px rgba(217, 70, 239, 0.15);
+      --input-bg: #ffffff;
+      --nav-bg: rgba(255, 255, 255, 0.92);
+      --card-blur: blur(14px);
+    }
+
+    body.dark-mode {
+      --bg: #0d021a;
+      --card: rgba(24, 10, 41, 0.78);
+      --text: #f5d0fe;
+      --muted: #c084fc;
+      --border: rgba(168, 85, 247, 0.3);
+      --input-bg: rgba(36, 15, 61, 0.9);
+      --nav-bg: rgba(18, 5, 33, 0.92);
+      --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.6);
+      --shadow-glow: 0 0 20px rgba(217, 70, 239, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; user-select: none; }
+    
+    body {
+      width: 100vw; height: 100dvh; background: var(--bg); color: var(--text); overflow: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 15%, rgba(244, 63, 94, 0.15) 0%, transparent 28%),
+        radial-gradient(circle at 90% 85%, rgba(139, 92, 246, 0.2) 0%, transparent 35%),
+        radial-gradient(circle at 50% 50%, rgba(217, 70, 239, 0.1) 0%, transparent 50%);
+      position: relative; transition: background 0.4s, color 0.4s;
+    }
+
+    .app-screen { width: 100vw; height: 100dvh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+
+    /* INDIKATOR PULL TO REFRESH */
+    .ptr-indicator {
+      position: absolute; top: 55px; left: 50%; transform: translateX(-50%) translateY(-50px);
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 6px 14px; font-size: 0.72rem; font-weight: 800; color: var(--primary);
+      box-shadow: var(--shadow-sm); z-index: 90; opacity: 0; transition: transform 0.2s ease, opacity 0.2s ease;
+      display: flex; align-items: center; gap: 6px; pointer-events: none;
+    }
+    .ptr-indicator.visible { opacity: 1; transform: translateX(-50%) translateY(10px); }
+
+    /* HEADER */
+    .app-bar {
+      background: linear-gradient(135deg, #a21caf 0%, #7c3aed 50%, #f43f5e 100%);
+      color: #ffffff; padding: 12px 18px;
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+      box-shadow: 0 4px 25px rgba(162, 28, 175, 0.35); position: relative; z-index: 20;
+    }
+    .brand-title { font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; }
+    
+    .profile-avatar-header {
+      width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    }
+
+    .more-menu-btn {
+      background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.35);
+      color: white; border-radius: 12px; width: 36px; height: 36px;
+      font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px); transition: all 0.2s;
+    }
+    
+    .dropdown-menu {
+      position: absolute; top: 58px; right: 18px; background: var(--card); border-radius: 18px;
+      box-shadow: var(--shadow-sm), var(--shadow-glow); border: 1px solid var(--border);
+      backdrop-filter: var(--card-blur); display: none; flex-direction: column; width: 200px; z-index: 100; overflow: hidden;
+    }
+    .dropdown-menu.show { display: flex; }
+    .dropdown-item {
+      padding: 12px 16px; font-size: 0.8rem; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 10px; cursor: pointer; background: none; border: none; text-align: left;
+    }
+
+    /* CONTENT AREA */
+    .content-area { flex: 1; overflow-y: auto; padding: 14px; position: relative; padding-bottom: 90px; -webkit-overflow-scrolling: touch; }
+    .view-tab { display: none; }
+    .view-tab.active { display: block; animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* CARD SALDO */
+    .balance-card {
+      background: linear-gradient(135deg, #f43f5e 0%, #d946ef 50%, #8b5cf6 100%);
+      color: white; border-radius: 24px; padding: 20px; margin-bottom: 14px;
+      box-shadow: 0 12px 30px rgba(217, 70, 239, 0.4); position: relative; overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .balance-header { display: flex; justify-content: space-between; align-items: center; }
+    .balance-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.95; }
+    .balance-amount { font-size: 1.9rem; font-weight: 800; margin: 6px 0 14px 0; }
+    .eye-btn { background: rgba(255, 255, 255, 0.25); border: none; color: white; padding: 5px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+
+    .balance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: rgba(255, 255, 255, 0.18); padding: 12px; border-radius: 16px; backdrop-filter: blur(8px); }
+    .sub-balance-val { font-size: 0.95rem; font-weight: 800; margin-top: 2px; }
+
+    .budget-bar-bg { background: rgba(255, 255, 255, 0.3); border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin-top: 6px; }
+    .budget-bar-fill { background: #ffffff; height: 100%; width: 0%; transition: width 0.4s ease; }
+
+    /* CARDS STYLING */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 22px;
+      padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow-sm); backdrop-filter: var(--card-blur);
+    }
+    .card-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 12px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
+
+    /* AI MOTIVATION WIDGET */
+    .ai-widget {
+      background: linear-gradient(135deg, rgba(217, 70, 239, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
+      border: 1px solid var(--border); border-radius: 18px; padding: 12px 14px; margin-bottom: 14px;
+      display: flex; gap: 12px; align-items: center; position: relative; backdrop-filter: var(--card-blur);
+    }
+    .ai-widget-icon {
+      width: 36px; height: 36px; border-radius: 12px; background: var(--primary);
+      color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .ai-widget-content { flex: 1; }
+    .ai-widget-tag { font-size: 0.65rem; font-weight: 800; color: var(--primary); text-transform: uppercase; }
+    .ai-widget-text { font-size: 0.76rem; font-weight: 700; color: var(--text); margin-top: 2px; line-height: 1.35; }
+
+    /* PROFILE CONTAINER FIX */
+    .profile-banner-container { position: relative; margin-bottom: 55px; }
+    .profile-card-header {
+      position: relative; height: 190px; border-radius: 22px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .profile-bg-blur {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+      filter: blur(18px) brightness(0.65); transform: scale(1.3);
+    }
+    .profile-avatar-wrapper {
+      position: absolute; bottom: -42px; left: 50%; transform: translateX(-50%);
+      width: 96px; height: 96px; border-radius: 50%;
+      border: 4px solid var(--card); box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 5;
+      overflow: hidden; background: var(--card);
+    }
+    .profile-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .form-group { margin-bottom: 12px; }
+    .form-label { display: block; font-size: 0.68rem; font-weight: 800; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; }
+    .form-input, .form-select {
+      width: 100%; padding: 11px 14px; border-radius: 14px; border: 1px solid var(--border);
+      font-size: 0.85rem; font-weight: 700; outline: none; background: var(--input-bg); color: var(--text);
+    }
+
+    .btn { padding: 12px; border-radius: 14px; border: none; font-weight: 800; font-size: 0.85rem; cursor: pointer; width: 100%; text-align: center; }
+    .btn-primary { background: linear-gradient(135deg, #d946ef 0%, #a21caf 100%); color: white; }
+    .btn-info { background: #8b5cf6; color: white; }
+    .btn-warning { background: #f97316; color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 0.72rem; border-radius: 10px; width: auto; }
+
+    .type-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    .type-btn {
+      padding: 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--input-bg);
+      color: var(--muted); font-size: 0.8rem; font-weight: 800; text-align: center; cursor: pointer;
+    }
+    .type-btn.active-income { background: rgba(16, 185, 129, 0.12); border-color: #10b981; color: #10b981; }
+    .type-btn.active-expense { background: rgba(244, 63, 94, 0.12); border-color: #f43f5e; color: #f43f5e; }
+
+    .tx-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; border-bottom: 1px dashed var(--border);
+    }
+    .tx-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-right: 10px; flex-shrink: 0; }
+    .tx-icon-income { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .tx-icon-expense { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
+    .tx-info { flex: 1; }
+    .tx-title { font-weight: 800; font-size: 0.82rem; color: var(--text); }
+    .tx-date { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
+    .tx-amount { font-weight: 800; font-size: 0.88rem; text-align: right; }
+    .tx-amount-income { color: #10b981; }
+    .tx-amount-expense { color: #f43f5e; }
+
+    /* BOTTOM NAV */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg);
+      border-top: 1px solid var(--border); display: flex; justify-content: space-between;
+      padding: 10px 4px calc(10px + env(safe-area-inset-bottom)); z-index: 50;
+      backdrop-filter: blur(16px); box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    }
+    .nav-btn {
+      background: none; border: none; font-size: 0.62rem; font-weight: 700;
+      color: var(--muted); display: flex; flex-direction: column; align-items: center;
+      gap: 3px; cursor: pointer; flex: 1; transition: all 0.2s;
+    }
+    .nav-btn .icon { font-size: 1.15rem; }
+    .nav-btn.active { color: var(--primary); font-weight: 800; transform: translateY(-2px); }
+
+    /* TOAST */
+    .toast-container {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 200; display: flex; flex-direction: column; gap: 8px; width: 90%; max-width: 360px; pointer-events: none;
+    }
+    .toast {
+      background: #3b0764; color: #ffffff; padding: 12px 16px; border-radius: 16px;
+      font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4); opacity: 0; transform: translateY(-20px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-success { border-left: 4px solid var(--primary); }
+    .toast-error { border-left: 4px solid var(--danger); }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(6px); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
+    .modal-card { background: var(--card); width: 100%; border-radius: 26px 26px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); max-height: 85dvh; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 1rem; font-weight: 800; }
+    .close-btn { background: var(--input-bg); color: var(--text); border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: 800; cursor: pointer; }
+
+    .chart-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0; }
+    .chart-legend { display: flex; gap: 14px; margin-top: 10px; font-size: 0.72rem; font-weight: 700; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .admin-badge {
+      background: #f43f5e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-screen">
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="ptr-indicator" id="ptrIndicator">🔄 Memperbarui Data...</div>
+
+    <!-- HEADER PROFIL -->
+    <div class="app-bar">
+      <div class="brand-title">
+        <img id="headerAvatar" class="profile-avatar-header" src="https://via.placeholder.com/150/d946ef/ffffff?text=🌷" alt="Profil">
+        <span id="appHeaderTitle">FinTrack Tulip</span>
+        <span id="adminBadgeHeader" class="admin-badge" style="display:none;">ADMIN</span>
+      </div>
+      
+      <button class="more-menu-btn" onclick="toggleDropdown(event)">⋮</button>
+      <div class="dropdown-menu" id="headerDropdown">
+        <button class="dropdown-item" onclick="toggleTheme(); hideDropdown();">
+          <span id="themeIcon">🌙</span> <span id="themeText">Mode Gelap</span>
+        </button>
+        <!-- HANYA MUNCUL DI DEVICE DEV-287810 -->
+        <button class="dropdown-item" id="adminDropdownBtn" style="display:none;" onclick="openAdminPanel(); hideDropdown();">👑 Panel Monitoring Admin</button>
+        <button class="dropdown-item" onclick="openModal('categoryModal'); hideDropdown();">🏷️ Kelola Kategori</button>
+        <button class="dropdown-item" onclick="exportCSV(); hideDropdown();">📄 Ekspor CSV</button>
+        <button class="dropdown-item" onclick="exportData(); hideDropdown();">💾 Backup Data</button>
+        <button class="dropdown-item" onclick="triggerImport(); hideDropdown();">📥 Import Data</button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT VIEW AREA -->
+    <div class="content-area" id="contentArea">
+      
+      <!-- 1. TAB DASHBOARD -->
+      <div id="tabDashboard" class="view-tab active">
+        <div class="balance-card">
+          <div class="balance-header">
+            <div class="balance-label">TOTAL SALDO BERSIH</div>
+            <button class="eye-btn" onclick="toggleBalanceVisibility()" id="eyeBtn">👁️ Sembunyikan</button>
+          </div>
+          <div class="balance-amount" id="dashTotalBalance">Rp 0</div>
+          
+          <div class="balance-grid">
+            <div>
+              <div style="font-size:0.65rem; opacity:0.9; font-weight:700;">(+) PEMASUKAN</div>
+              <div class="sub-balance-val" id="dashTotalIncome">Rp 0</div>
+            </div>
+            <div>
+              <div style="font-size:0.65rem; opacity:0.9; font-weight:700;">(-) PENGELUARAN</div>
+              <div class="sub-balance-val" id="dashTotalExpense">Rp 0</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.68rem; font-weight:700;">
+              <span>Target Limit Belanja Bulanan</span>
+              <span id="dashBudgetLabel">0% Terpakai</span>
+            </div>
+            <div class="budget-bar-bg">
+              <div class="budget-bar-fill" id="dashBudgetFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-widget">
+          <div class="ai-widget-icon">✨</div>
+          <div class="ai-widget-content">
+            <div class="ai-widget-tag">Tulip AI Motivation</div>
+            <div class="ai-widget-text" id="aiQuoteText">Memuat inspirasi hari ini...</div>
+          </div>
+          <button style="background:none; border:none; cursor:pointer; font-size:0.9rem; color:var(--muted);" onclick="generateAiQuote()">🔄</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>🔴 Rasio Pemasukan vs Pengeluaran</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="pieChartCanvas" width="180" height="180"></canvas>
+            <div class="chart-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div><span>Pemasukan</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f43f5e;"></div><span>Pengeluaran</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>🏛️ Ringkasan Tabungan Impian</span>
+            <b id="dashSavingsTotal" style="color:var(--primary-dark);">Rp 0</b>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>🌸 Transaksi Terbaru</span>
+          </div>
+          <div id="dashRecentTx"></div>
+        </div>
+      </div>
+
+      <!-- 2. TAB TRANSAKSI -->
+      <div id="tabTx" class="view-tab">
+        <div class="card">
+          <div class="card-title">
+            <span>🌷 Catat Transaksi Baru</span>
+          </div>
+
+          <div class="type-selector">
+            <div class="type-btn active-expense" id="btnTypeExpense" onclick="selectType('expense')">💸 Pengeluaran</div>
+            <div class="type-btn" id="btnTypeIncome" onclick="selectType('income')">💰 Pemasukan</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">TANGGAL TRANSAKSI</label>
+            <input type="date" id="txDateInput" class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">KETERANGAN / CATATAN</label>
+            <input type="text" id="txTitle" class="form-input" placeholder="Contoh: Belanja Tulip, Gaji Bulanan">
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">NOMINAL (RP)</label>
+              <input type="number" id="txAmount" class="form-input" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">SUMBER DOMPET / AKUN</label>
+              <select id="txAccount" class="form-select">
+                <option value="Tunai">💵 Tunai / Cash</option>
+                <option value="Rekening Utama">🏦 Rekening Utama</option>
+                <option value="Tabungan">🏛️ Rekening Tabungan</option>
+                <option value="E-Wallet">📱 E-Wallet / QRIS</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">KATEGORI</label>
+            <select id="txCategory" class="form-select"></select>
+          </div>
+
+          <button class="btn btn-primary" onclick="saveTransaction()">🌷 SIMPAN TRANSAKSI</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>🌸 Riwayat Keuangan</span>
+            <span style="font-size:0.7rem; color:var(--muted);" id="txCount">0 Transaksi</span>
+          </div>
+          
+          <div id="transactionList"></div>
+        </div>
+      </div>
+
+      <!-- 3. TAB TABUNGAN -->
+      <div id="tabSavings" class="view-tab">
+        <div class="card">
+          <div class="card-title">🎯 Pengaturan Limit Belanja Bulanan</div>
+          <div class="form-group">
+            <label class="form-label">BATAS MAXIMAL PENGELUARAN (RP)</label>
+            <input type="number" id="budgetLimitInput" class="form-input" placeholder="Contoh: 3000000">
+          </div>
+          <button class="btn btn-info" onclick="saveBudgetLimit()">SIMPAN LIMIT BELANJA</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🏛️ Celengan & Target Tabungan</div>
+          <div class="form-group">
+            <label class="form-label">NAMA TARGET IMPIAN</label>
+            <input type="text" id="saveGoalName" class="form-input" placeholder="Contoh: Beli Laptop Baru">
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">TARGET NOMINAL (RP)</label>
+              <input type="number" id="saveTargetAmount" class="form-input" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">SALDO TERKUMPUL (RP)</label>
+              <input type="number" id="saveCurrentAmount" class="form-input" placeholder="0">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="saveSavingsGoal()">+ TAMBAH TARGET TABUNGAN</button>
+
+          <div id="savingsGoalList" style="margin-top:14px;"></div>
+        </div>
+      </div>
+
+      <!-- 4. TAB LAPORAN (DENGAN GRAFIK PERBANDINGAN & DINGIN KATEGORI) -->
+      <div id="tabReport" class="view-tab">
+        <div class="card">
+          <div class="card-title">📊 Filter Laporan Bulanan</div>
+          <div class="form-group">
+            <label class="form-label">PILIH BULAN & TAHUN</label>
+            <input type="month" id="repMonthFilter" class="form-input" onchange="renderReports()">
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">⚖️ Grafik Perbandingan Masuk vs Keluar</div>
+          <div class="chart-box">
+            <canvas id="compChartCanvas" width="280" height="150"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 Grafik Pengeluaran Per Kategori</div>
+          <div class="chart-box">
+            <canvas id="barChartCanvas" width="280" height="180"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📈 Rincian Alokasi Pengeluaran</div>
+          <div id="reportCategorySummary"></div>
+        </div>
+      </div>
+
+      <!-- 5. TAB PROFIL -->
+      <div id="tabProfile" class="view-tab">
+        <div class="card">
+          
+          <div class="profile-banner-container">
+            <div class="profile-card-header">
+              <img id="profileBgBlur" class="profile-bg-blur" src="https://via.placeholder.com/150/d946ef/ffffff?text=🌷" alt="Logo Background">
+            </div>
+            <div class="profile-avatar-wrapper">
+              <img id="profileMainAvatar" class="profile-avatar-img" src="https://via.placeholder.com/150/d946ef/ffffff?text=🌷" alt="Foto Profil Bulat">
+            </div>
+          </div>
+
+          <div style="text-align:center; margin-bottom:18px;">
+            <h3 id="profileDisplayName" style="font-size:1.15rem; font-weight:800;">Diki Iskandar</h3>
+            <p id="profileDisplayMention" style="font-size:0.75rem; color:var(--primary); font-weight:700;">@diki_iskandar</p>
+            <p id="profileDisplayBio" style="font-size:0.72rem; color:var(--muted); margin-top:4px;">Managing My Financial Freedom 🌷</p>
+          </div>
+
+          <button class="btn btn-info btn-sm" style="width:100%; margin-bottom:14px;" onclick="document.getElementById('profileImageInput').click()">🖼️ Ubah Foto / Logo Profil</button>
+          <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="handleProfileImageUpload(event)">
+
+          <div class="form-group">
+            <label class="form-label">NAMA LENGKAP / PEMILIK</label>
+            <input type="text" id="profFullName" class="form-input" placeholder="Contoh: Diki Iskandar">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">MENTION / USERNAME (@)</label>
+            <input type="text" id="profMention" class="form-input" placeholder="Contoh: diki_iskandar">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">BIO / KATA MUTIARA</label>
+            <input type="text" id="profBio" class="form-input" placeholder="Status atau bio singkat...">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ID DEVICE SAYA</label>
+            <input type="text" id="profDeviceId" class="form-input" readonly style="opacity:0.7; background:var(--border);">
+          </div>
+
+          <button class="btn btn-primary" onclick="saveFullProfile()">💾 SIMPAN PERUBAHAN PROFIL</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BOTTOM NAVBAR -->
+    <div class="bottom-nav">
+      <button class="nav-btn active" onclick="switchNavTab('tabDashboard', this)">
+        <span class="icon">📊</span><span>Dashboard</span>
+      </button>
+      <button class="nav-btn" onclick="switchNavTab('tabTx', this)">
+        <span class="icon">🌷</span><span>Transaksi</span>
+      </button>
+      <button class="nav-btn" onclick="switchNavTab('tabSavings', this)">
+        <span class="icon">🎯</span><span>Tabungan</span>
+      </button>
+      <button class="nav-btn" onclick="switchNavTab('tabReport', this)">
+        <span class="icon">📈</span><span>Laporan</span>
+      </button>
+      <button class="nav-btn" onclick="switchNavTab('tabProfile', this)">
+        <span class="icon">👤</span><span>Profil</span>
+      </button>
+    </div>
+
+    <!-- MODAL EDIT TRANSAKSI -->
+    <div class="modal-overlay" id="editTxModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">Edit Transaksi</div>
+          <button class="close-btn" onclick="closeModal('editTxModal')">✕</button>
+        </div>
+        <input type="hidden" id="editTxId">
+        <div class="form-group">
+          <label class="form-label">TANGGAL TRANSAKSI</label>
+          <input type="date" id="editTxDate" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">KETERANGAN / CATATAN</label>
+          <input type="text" id="editTxTitle" class="form-input">
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">NOMINAL (RP)</label>
+            <input type="number" id="editTxAmount" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">SUMBER AKUN</label>
+            <select id="editTxAccount" class="form-select">
+              <option value="Tunai">💵 Tunai / Cash</option>
+              <option value="Rekening Utama">🏦 Rekening Utama</option>
+              <option value="Tabungan">🏛️ Rekening Tabungan</option>
+              <option value="E-Wallet">📱 E-Wallet / QRIS</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="updateTransaction()">SIMPAN PERUBAHAN</button>
+      </div>
+    </div>
+
+    <!-- MODAL MONITORING ADMIN -->
+    <div class="modal-overlay" id="adminModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">👑 Panel Monitoring Admin</div>
+          <button class="close-btn" onclick="closeModal('adminModal')">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PILIH DEVICE USER UNTUK DIPANTAU</label>
+          <select id="adminDeviceSelect" class="form-select" onchange="filterAdminDevice()">
+            <option value="ALL">🌐 Semua Device User (Gabungan)</option>
+          </select>
+        </div>
+        <div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px;">
+          Dipilih: <b id="adminSelectedLabel" style="color:var(--primary);">Semua Device</b>
+        </div>
+        <div id="adminTxList" style="max-height:300px; overflow-y:auto;"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // DATABASE REALTIME CLOUD LENGKAP UTK GITHUB PAGES (dzuliskar-106.github.io)
+    const firebaseConfig = {
+      databaseURL: "https://fintrack-tulip-default-rtdb.firebaseio.com"
+    };
+
+    let db;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+    } catch(e) {}
+
+    // SYSTEM IDENTIFIKASI DEVICE
+    let deviceId = localStorage.getItem('fintrack_device_id');
+    if(!deviceId) {
+      deviceId = 'DEV-' + Math.floor(100000 + Math.random() * 900000);
+      localStorage.setItem('fintrack_device_id', deviceId);
+    }
+
+    // DISESUAIKAN: HANYA DEVICE DEV-287810 SEBAGAI ADMIN AKSI TERSEMBUNYI
+    const ADMIN_DEVICE_ID = "DEV-287810";
+    const IS_ADMIN_DEVICE = (deviceId === ADMIN_DEVICE_ID);
+
+    let allCloudTransactions = [];
+    let registeredDevices = {};
+    let selectedAdminDeviceFilter = "ALL";
+
+    let currentType = 'expense';
+    let isBalanceHidden = false;
+
+    let appProfile = JSON.parse(localStorage.getItem('fintrack_profile')) || { 
+      fullName: "Diki Iskandar",
+      mention: "diki_iskandar",
+      bio: "Managing My Financial Freedom 🌷",
+      avatar: "https://via.placeholder.com/150/d946ef/ffffff?text=🌷" 
+    };
+
+    let transactions = JSON.parse(localStorage.getItem('fintrack_data')) || [];
+    let savings = JSON.parse(localStorage.getItem('fintrack_savings')) || [];
+    let monthlyBudget = parseFloat(localStorage.getItem('fintrack_budget')) || 3000000;
+    let isDarkMode = localStorage.getItem('fintrack_theme') === 'dark';
+
+    let categories = {
+      expense: ['🌷 Makanan & Minuman', '🛍️ Belanja & Fashion', '🏠 Transport & Bensin', '🎮 Hiburan & Hobi', '💸 Tagihan & Lainnya'],
+      income: ['💼 Gaji & Bonus', '🛍️ Hasil Penjualan', '🎁 Hadiah / Transfer', '💰 Investasi & Lainnya']
+    };
+
+    const aiQuotes = [
+      "🌷 'Jangan menabung apa yang tersisa setelah dibelanjakan, belanjakan apa yang tersisa setelah menabung.'",
+      "✨ Uang yang kamu hemat hari ini adalah kebebasan yang kamu beli di masa depan!",
+      "💡 Aturan 50/30/20: 50% Kebutuhan, 30% Keinginan, 20% langsung ke Tabungan!",
+      "🌸 Tulip butuh waktu untuk mekar indah, begitu pula finansialmu. Tetap disiplin ya!"
+    ];
+
+    function syncDevicePresence() {
+      if(db) {
+        db.ref('devices/' + deviceId).set({
+          deviceId: deviceId,
+          name: appProfile.fullName || "User Tulip",
+          mention: appProfile.mention || "",
+          lastActive: Date.now()
+        });
+      }
+    }
+
+    function checkAdminAccess() {
+      if (IS_ADMIN_DEVICE) {
+        document.getElementById('adminBadgeHeader').style.display = 'inline-block';
+        document.getElementById('adminDropdownBtn').style.display = 'flex';
+        initCloudAdminListener();
+      }
+    }
+
+    function generateAiQuote() {
+      const quoteElem = document.getElementById('aiQuoteText');
+      if(quoteElem) quoteElem.innerText = aiQuotes[Math.floor(Math.random() * aiQuotes.length)];
+    }
+
+    function initCloudAdminListener() {
+      if(!db) return;
+
+      db.ref('devices').on('value', (snapshot) => {
+        registeredDevices = snapshot.val() || {};
+        updateAdminDeviceSelect();
+      });
+
+      db.ref('all_transactions').on('value', (snapshot) => {
+        const data = snapshot.val();
+        allCloudTransactions = [];
+        if(data) {
+          Object.keys(data).forEach(key => {
+            allCloudTransactions.push({ id: key, ...data[key] });
+          });
+        }
+        updateAdminDeviceSelect();
+        renderAdminView();
+      });
+    }
+
+    function updateAdminDeviceSelect() {
+      const select = document.getElementById('adminDeviceSelect');
+      if(!select) return;
+      select.innerHTML = '<option value="ALL">🌐 Semua Device User (Gabungan)</option>';
+      
+      const deviceSet = new Set(Object.keys(registeredDevices));
+      allCloudTransactions.forEach(t => { if(t.ownerDeviceId) deviceSet.add(t.ownerDeviceId); });
+
+      deviceSet.forEach(devId => {
+        const devInfo = registeredDevices[devId];
+        const nameLabel = devInfo ? `${devInfo.name} (${devId})` : devId;
+        select.innerHTML += `<option value="${devId}">📱 ${nameLabel}</option>`;
+      });
+    }
+
+    function openAdminPanel() {
+      openModal('adminModal');
+      renderAdminView();
+    }
+
+    function filterAdminDevice() {
+      selectedAdminDeviceFilter = document.getElementById('adminDeviceSelect').value;
+      document.getElementById('adminSelectedLabel').innerText = selectedAdminDeviceFilter === 'ALL' ? 'Semua Device' : selectedAdminDeviceFilter;
+      renderAdminView();
+    }
+
+    function renderAdminView() {
+      const container = document.getElementById('adminTxList');
+      if(!container) return;
+      container.innerHTML = '';
+
+      let list = allCloudTransactions;
+      if(selectedAdminDeviceFilter !== 'ALL') {
+        list = list.filter(t => t.ownerDeviceId === selectedAdminDeviceFilter);
+      }
+
+      if(list.length === 0) {
+        container.innerHTML = `<div style="text-align:center; font-size:0.75rem; color:var(--muted); padding:10px;">Belum ada data dari device ini</div>`;
+        return;
+      }
+
+      list.forEach(t => {
+        const isInc = t.type === 'income';
+        container.innerHTML += `
+          <div style="padding:8px 0; border-bottom:1px dashed var(--border); font-size:0.75rem; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <b>${t.title}</b> (${t.ownerName || t.ownerDeviceId})
+              <div style="font-size:0.65rem; color:var(--muted);">${t.category} • ${formatDateDisplay(t.date)}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <b style="color:${isInc ? '#10b981' : '#f43f5e'}">${isInc ? '+' : '-'}Rp ${t.amount.toLocaleString('id-ID')}</b>
+              <button class="btn btn-warning btn-sm" onclick="openEditTxModal('${t.id}')">✏️ Edit</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function formatDateDisplay(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        return `${parseInt(parts[2])} ${months[parseInt(parts[1]) - 1]} ${parts[0]}`;
+      }
+      return dateStr;
+    }
+
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<span>${type === 'success' ? '🌷' : '⚠️'}</span><span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => toast.classList.add('show'), 10);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeIcon').innerText = '☀️';
+        document.getElementById('themeText').innerText = 'Mode Terang';
+        localStorage.setItem('fintrack_theme', 'dark');
+      } else {
+        document.body.classList.remove('dark-mode');
+        document.getElementById('themeIcon').innerText = '🌙';
+        document.getElementById('themeText').innerText = 'Mode Gelap';
+        localStorage.setItem('fintrack_theme', 'light');
+      }
+      renderPieChart();
+      renderReports();
+    }
+
+    function initTheme() {
+      if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeIcon').innerText = '☀️';
+        document.getElementById('themeText').innerText = 'Mode Terang';
+      }
+    }
+
+    function toggleDropdown(e) {
+      e.stopPropagation();
+      document.getElementById('headerDropdown').classList.toggle('show');
+    }
+
+    function hideDropdown() {
+      document.getElementById('headerDropdown').classList.remove('show');
+    }
+
+    document.addEventListener('click', hideDropdown);
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function switchNavTab(tabId, btn) {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+
+      if(tabId === 'tabDashboard') { renderPieChart(); generateAiQuote(); }
+      if(tabId === 'tabReport') renderReports();
+    }
+
+    function toggleBalanceVisibility() {
+      isBalanceHidden = !isBalanceHidden;
+      document.getElementById('eyeBtn').innerText = isBalanceHidden ? '👁️ Tampilkan' : '👁️ Sembunyikan';
+      renderUI();
+    }
+
+    function initProfileUI() {
+      document.getElementById('headerAvatar').src = appProfile.avatar;
+      document.getElementById('profileMainAvatar').src = appProfile.avatar;
+      document.getElementById('profileBgBlur').src = appProfile.avatar;
+
+      document.getElementById('profileDisplayName').innerText = appProfile.fullName || "Diki Iskandar";
+      document.getElementById('profileDisplayMention').innerText = "@" + (appProfile.mention || "diki_iskandar");
+      document.getElementById('profileDisplayBio').innerText = appProfile.bio || "Managing My Financial Freedom 🌷";
+
+      document.getElementById('profFullName').value = appProfile.fullName || "";
+      document.getElementById('profMention').value = appProfile.mention || "";
+      document.getElementById('profBio').value = appProfile.bio || "";
+      document.getElementById('profDeviceId').value = deviceId;
+
+      document.getElementById('txDateInput').valueAsDate = new Date();
+      
+      const now = new Date();
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      document.getElementById('repMonthFilter').value = monthStr;
+    }
+
+    function handleProfileImageUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          appProfile.avatar = evt.target.result;
+          document.getElementById('profileMainAvatar').src = evt.target.result;
+          document.getElementById('profileBgBlur').src = evt.target.result;
+          document.getElementById('headerAvatar').src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function saveFullProfile() {
+      const fn = document.getElementById('profFullName').value.trim();
+      const mn = document.getElementById('profMention').value.trim();
+      const bio = document.getElementById('profBio').value.trim();
+
+      if(!fn) return showToast('Nama Lengkap wajib diisi!', 'error');
+
+      appProfile.fullName = fn; appProfile.mention = mn; appProfile.bio = bio;
+      localStorage.setItem('fintrack_profile', JSON.stringify(appProfile));
+      syncDevicePresence();
+      initProfileUI();
+      showToast('Profil Berhasil Diperbarui!');
+    }
+
+    function updateCategorySelect() {
+      const select = document.getElementById('txCategory');
+      select.innerHTML = '';
+      categories[currentType].forEach(cat => {
+        select.innerHTML += `<option value="${cat}">${cat}</option>`;
+      });
+    }
+
+    function selectType(type) {
+      currentType = type;
+      const btnExp = document.getElementById('btnTypeExpense');
+      const btnInc = document.getElementById('btnTypeIncome');
+
+      if (type === 'expense') {
+        btnExp.className = 'type-btn active-expense'; btnInc.className = 'type-btn';
+      } else {
+        btnInc.className = 'type-btn active-income'; btnExp.className = 'type-btn';
+      }
+      updateCategorySelect();
+    }
+
+    function saveTransaction() {
+      const titleInput = document.getElementById('txTitle');
+      const amountInput = document.getElementById('txAmount');
+      const dateVal = document.getElementById('txDateInput').value || new Date().toISOString().split('T')[0];
+      const title = titleInput.value.trim();
+      const amount = parseFloat(amountInput.value) || 0;
+      const category = document.getElementById('txCategory').value;
+      const account = document.getElementById('txAccount').value;
+
+      if (!title || amount <= 0) return showToast('Isi catatan dan nominal transaksi!', 'error');
+
+      const newTx = {
+        id: Date.now(), ownerDeviceId: deviceId, ownerName: appProfile.fullName,
+        type: currentType, title, amount, account, category, date: dateVal
+      };
+
+      transactions.unshift(newTx);
+      localStorage.setItem('fintrack_data', JSON.stringify(transactions));
+
+      if(db) db.ref('all_transactions/' + newTx.id).set(newTx);
+
+      titleInput.value = ''; amountInput.value = '';
+      renderUI();
+      showToast('Transaksi Berhasil Dicatat!');
+    }
+
+    function openEditTxModal(id) {
+      let t = transactions.find(x => x.id == id);
+      if(!t) t = allCloudTransactions.find(x => x.id == id);
+      if(!t) return;
+
+      document.getElementById('editTxId').value = t.id;
+      document.getElementById('editTxDate').value = t.date;
+      document.getElementById('editTxTitle').value = t.title;
+      document.getElementById('editTxAmount').value = t.amount;
+      document.getElementById('editTxAccount').value = t.account || 'Tunai';
+
+      openModal('editTxModal');
+    }
+
+    function updateTransaction() {
+      const id = document.getElementById('editTxId').value;
+      const dateVal = document.getElementById('editTxDate').value;
+      const title = document.getElementById('editTxTitle').value.trim();
+      const amount = parseFloat(document.getElementById('editTxAmount').value) || 0;
+      const account = document.getElementById('editTxAccount').value;
+
+      if(!title || amount <= 0) return showToast('Isi keterangan & nominal valid!', 'error');
+
+      const t = transactions.find(x => x.id == id);
+      if(t) {
+        t.date = dateVal; t.title = title; t.amount = amount; t.account = account;
+        localStorage.setItem('fintrack_data', JSON.stringify(transactions));
+      }
+
+      if(db) {
+        db.ref('all_transactions/' + id).update({ date: dateVal, title: title, amount: amount, account: account });
+      }
+
+      closeModal('editTxModal');
+      renderUI();
+      showToast('Data Transaksi Diperbarui!');
+    }
+
+    function deleteTransaction(id) {
+      if (confirm('Hapus catatan transaksi ini?')) {
+        transactions = transactions.filter(t => t.id != id);
+        localStorage.setItem('fintrack_data', JSON.stringify(transactions));
+
+        if(db) db.ref('all_transactions/' + id).remove();
+
+        renderUI();
+        showToast('Transaksi Berhasil Dihapus');
+      }
+    }
+
+    function renderPieChart() {
+      const canvas = document.getElementById('pieChartCanvas');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let incomeSum = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      let expenseSum = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const total = incomeSum + expenseSum;
+
+      const centerX = canvas.width / 2; const centerY = canvas.height / 2; const radius = 65;
+
+      if (total === 0) {
+        ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = isDarkMode ? 'rgba(168, 85, 247, 0.2)' : '#f5d0fe';
+        ctx.lineWidth = 18; ctx.stroke(); return;
+      }
+
+      const incomeAngle = (incomeSum / total) * 2 * Math.PI;
+
+      ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, incomeAngle);
+      ctx.strokeStyle = '#10b981'; ctx.lineWidth = 18; ctx.stroke();
+
+      ctx.beginPath(); ctx.arc(centerX, centerY, radius, incomeAngle, 2 * Math.PI);
+      ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 18; ctx.stroke();
+
+      const expPct = Math.round((expenseSum / total) * 100);
+      ctx.fillStyle = isDarkMode ? '#f5d0fe' : '#3b0764';
+      ctx.font = 'bold 12px Plus Jakarta Sans'; ctx.textAlign = 'center';
+      ctx.fillText(`${expPct}% Out`, centerX, centerY + 4);
+    }
+
+    /* RENDER DUA GRAFIK DI TAB LAPORAN (CANVAS COMPARTMENT & BAR CHART) */
+    function renderReports() {
+      const selectedMonth = document.getElementById('repMonthFilter').value;
+      let filtered = transactions;
+      if (selectedMonth) filtered = filtered.filter(t => t.date && t.date.startsWith(selectedMonth));
+
+      const expTotal = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      const incTotal = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const container = document.getElementById('reportCategorySummary');
+      container.innerHTML = '';
+
+      // 1. RENDER GRAFIK PERBANDINGAN (PIE CANVAS PERBANDINGAN LAPORAN)
+      const compCanvas = document.getElementById('compChartCanvas');
+      if(compCanvas) {
+        const cCtx = compCanvas.getContext('2d');
+        cCtx.clearRect(0, 0, compCanvas.width, compCanvas.height);
+        const tot = expTotal + incTotal;
+        const cX = compCanvas.width / 2; const cY = compCanvas.height / 2;
+
+        if(tot === 0) {
+          cCtx.font = 'bold 11px Plus Jakarta Sans'; cCtx.fillStyle = isDarkMode ? '#c084fc' : '#86198f'; cCtx.textAlign = 'center';
+          cCtx.fillText('Belum ada data transaksi', cX, cY);
+        } else {
+          const incAngle = (incTotal / tot) * 2 * Math.PI;
+          cCtx.beginPath(); cCtx.arc(cX, cY, 50, 0, incAngle); cCtx.strokeStyle = '#10b981'; cCtx.lineWidth = 14; cCtx.stroke();
+          cCtx.beginPath(); cCtx.arc(cX, cY, 50, incAngle, 2 * Math.PI); cCtx.strokeStyle = '#f43f5e'; cCtx.lineWidth = 14; cCtx.stroke();
+        }
+      }
+
+      // 2. RENDER GRAFIK BATANG PER KATEGORI (BAR CHART CANVAS LAPORAN)
+      const barCanvas = document.getElementById('barChartCanvas');
+      if(barCanvas) {
+        const bCtx = barCanvas.getContext('2d');
+        bCtx.clearRect(0, 0, barCanvas.width, barCanvas.height);
+        
+        const summary = {};
+        filtered.filter(t => t.type === 'expense').forEach(t => {
+          summary[t.category] = (summary[t.category] || 0) + t.amount;
+        });
+
+        const catKeys = Object.keys(summary);
+        if(catKeys.length === 0) {
+          bCtx.font = 'bold 11px Plus Jakarta Sans'; bCtx.fillStyle = isDarkMode ? '#c084fc' : '#86198f'; bCtx.textAlign = 'center';
+          bCtx.fillText('Tidak ada pengeluaran di bulan ini', barCanvas.width / 2, barCanvas.height / 2);
+        } else {
+          const maxVal = Math.max(...Object.values(summary));
+          const barWidth = 24; const spacing = 16;
+          let startX = (barCanvas.width - (catKeys.length * (barWidth + spacing))) / 2;
+
+          catKeys.forEach((cat, idx) => {
+            const h = Math.round((summary[cat] / maxVal) * 100);
+            const x = startX + idx * (barWidth + spacing);
+            const y = barCanvas.height - h - 25;
+
+            bCtx.fillStyle = '#d946ef';
+            bCtx.fillRect(x, y, barWidth, h);
+
+            bCtx.fillStyle = isDarkMode ? '#f5d0fe' : '#3b0764';
+            bCtx.font = 'bold 9px Plus Jakarta Sans'; bCtx.textAlign = 'center';
+            bCtx.fillText(`${Math.round((summary[cat]/expTotal)*100)}%`, x + barWidth/2, y - 5);
+          });
+        }
+      }
+
+      // 3. RINCIAN ALOKASI BARIS PENGELUARAN
+      if(expTotal === 0) {
+        container.innerHTML = `<div style="text-align:center; font-size:0.75rem; color:var(--muted);">Belum ada pengeluaran pada bulan ini</div>`;
+        return;
+      }
+
+      const summary = {};
+      filtered.filter(t => t.type === 'expense').forEach(t => {
+        summary[t.category] = (summary[t.category] || 0) + t.amount;
+      });
+
+      Object.keys(summary).forEach(cat => {
+        const amt = summary[cat];
+        const pct = Math.round((amt / expTotal) * 100);
+        container.innerHTML += `
+          <div style="margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700;">
+              <span>${cat}</span>
+              <span>${isBalanceHidden ? 'Rp •••••••' : 'Rp ' + amt.toLocaleString('id-ID')} (${pct}%)</span>
+            </div>
+            <div class="budget-bar-bg" style="background:var(--border);">
+              <div class="budget-bar-fill" style="width:${pct}%; background:var(--primary);"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function renderUI() {
+      const listContainer = document.getElementById('transactionList');
+      const recentContainer = document.getElementById('dashRecentTx');
+
+      listContainer.innerHTML = ''; recentContainer.innerHTML = '';
+
+      let incomeSum = 0; let expenseSum = 0;
+
+      if (transactions.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--muted); font-size:0.78rem;">Belum ada riwayat transaksi 🌷</div>`;
+        recentContainer.innerHTML = `<div style="text-align:center; padding:10px; color:var(--muted); font-size:0.75rem;">Belum ada transaksi</div>`;
+      } else {
+        const visibleTx = transactions.slice(0, 10);
+
+        visibleTx.forEach((t) => {
+          const isIncome = t.type === 'income';
+          const displayAmt = isBalanceHidden ? 'Rp •••••••' : `Rp ${t.amount.toLocaleString('id-ID')}`;
+
+          const htmlItem = `
+            <div class="tx-item">
+              <div style="display:flex; align-items:center;">
+                <div class="tx-icon ${isIncome ? 'tx-icon-income' : 'tx-icon-expense'}">${isIncome ? '💰' : '💸'}</div>
+                <div class="tx-info">
+                  <div class="tx-title">${t.title}</div>
+                  <div class="tx-date">${t.category} • ${t.account || 'Tunai'} • ${formatDateDisplay(t.date)}</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <div class="tx-amount ${isIncome ? 'tx-amount-income' : 'tx-amount-expense'}">${isIncome ? '+' : '-'}${displayAmt}</div>
+                <button class="btn btn-warning btn-sm" onclick="openEditTxModal('${t.id}')">✏️</button>
+                <button onclick="deleteTransaction('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:0.8rem; opacity:0.6;">🗑️</button>
+              </div>
+            </div>
+          `;
+          listContainer.innerHTML += htmlItem;
+        });
+
+        transactions.forEach((t) => {
+          if (t.type === 'income') incomeSum += t.amount;
+          if (t.type === 'expense') expenseSum += t.amount;
+        });
+      }
+
+      const balance = incomeSum - expenseSum;
+      document.getElementById('dashTotalBalance').innerText = isBalanceHidden ? 'Rp •••••••' : `Rp ${balance.toLocaleString('id-ID')}`;
+      document.getElementById('dashTotalIncome').innerText = isBalanceHidden ? 'Rp •••••••' : `Rp ${incomeSum.toLocaleString('id-ID')}`;
+      document.getElementById('dashTotalExpense').innerText = isBalanceHidden ? 'Rp •••••••' : `Rp ${expenseSum.toLocaleString('id-ID')}`;
+      document.getElementById('txCount').innerText = `${transactions.length} Transaksi`;
+
+      const pct = Math.min(100, Math.round((expenseSum / monthlyBudget) * 100));
+      document.getElementById('dashBudgetLabel').innerText = `${pct}% Terpakai dari Rp ${monthlyBudget.toLocaleString('id-ID')}`;
+      document.getElementById('dashBudgetFill').style.width = `${pct}%`;
+
+      renderPieChart();
+    }
+
+    // SYSTEM PULL TO REFRESH
+    let startY = 0;
+    let isPulling = false;
+    const contentArea = document.getElementById('contentArea');
+    const ptrIndicator = document.getElementById('ptrIndicator');
+
+    contentArea.addEventListener('touchstart', (e) => {
+      if (contentArea.scrollTop === 0) {
+        startY = e.touches[0].pageY;
+        isPulling = true;
+      }
+    }, { passive: true });
+
+    contentArea.addEventListener('touchmove', (e) => {
+      if (!isPulling) return;
+      const currentY = e.touches[0].pageY;
+      const pullDistance = currentY - startY;
+
+      if (pullDistance > 60 && contentArea.scrollTop === 0) {
+        ptrIndicator.classList.add('visible');
+      }
+    }, { passive: true });
+
+    contentArea.addEventListener('touchend', () => {
+      if (ptrIndicator.classList.contains('visible')) {
+        setTimeout(() => {
+          ptrIndicator.classList.remove('visible');
+          syncDevicePresence();
+          renderUI();
+          renderReports();
+          showToast('Data Berhasil Diperbarui 🔄');
+        }, 800);
+      }
+      isPulling = false;
+    });
+
+    // INIT
+    initTheme();
+    syncDevicePresence();
+    checkAdminAccess();
+    initProfileUI();
+    generateAiQuote();
+    updateCategorySelect();
+    renderUI();
+  </script>
+</body>
+</html>
