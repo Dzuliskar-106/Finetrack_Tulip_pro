@@ -3,43 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>FinTrack - Tulip Garden Edition</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>FinTrack - Vibrant Glowing Tulip Edition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,600;1,700&display=swap" rel="stylesheet">
   
   <!-- SUPABASE JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
-      --primary: #d946ef;
-      --primary-dark: #a21caf;
-      --primary-light: #fdf4ff;
-      --secondary: #8b5cf6;
-      --accent: #f97316;
-      --bg: #fcf8ff;
-      --card: rgba(255, 255, 255, 0.88);
-      --text: #3b0764;
-      --muted: #86198f;
-      --border: rgba(245, 208, 254, 0.8);
-      --danger: #f43f5e;
-      --success: #10b981;
-      --shadow-sm: 0 8px 25px rgba(217, 70, 239, 0.08);
-      --shadow-glow: 0 0 15px rgba(217, 70, 239, 0.15);
+      /* LIGHT MODE: VIBRANT ELECTRIC PINK TO PURPLE */
+      --primary: #ff2a85;
+      --primary-dark: #b01eff;
+      --primary-light: #fff0f7;
+      --secondary: #d946ef;
+      --accent: #ff007f;
+      --bg: #fff2f8;
+      --card: rgba(255, 255, 255, 0.94);
+      --text: #3b003a;
+      --muted: #c0007a;
+      --border: rgba(255, 105, 180, 0.5);
+      --danger: #ff1744;
+      --success: #00e676;
+      --shadow-sm: 0 10px 30px rgba(255, 42, 133, 0.2);
+      --shadow-glow: 0 0 20px rgba(255, 42, 133, 0.35);
       --input-bg: #ffffff;
-      --nav-bg: rgba(255, 255, 255, 0.92);
-      --card-blur: blur(14px);
+      --nav-bg: rgba(255, 255, 255, 0.96);
+      --card-blur: blur(16px);
+      --neon-border: rgba(255, 42, 133, 0.6);
     }
 
     body.dark-mode {
-      --bg: #0d021a;
-      --card: rgba(24, 10, 41, 0.78);
-      --text: #f5d0fe;
-      --muted: #c084fc;
-      --border: rgba(168, 85, 247, 0.3);
-      --input-bg: rgba(36, 15, 61, 0.9);
-      --nav-bg: rgba(18, 5, 33, 0.92);
-      --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.6);
-      --shadow-glow: 0 0 20px rgba(217, 70, 239, 0.35);
+      /* DARK MODE: NEON GLOW CYBER-TULIP */
+      --bg: #0d0114;
+      --card: rgba(25, 4, 38, 0.88);
+      --text: #ffb8e8;
+      --muted: #ff52be;
+      --border: rgba(255, 0, 128, 0.6);
+      --input-bg: rgba(45, 8, 66, 0.9);
+      --nav-bg: rgba(18, 2, 28, 0.96);
+      --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.9);
+      --shadow-glow: 0 0 25px rgba(255, 0, 150, 0.6), 0 0 10px rgba(176, 30, 255, 0.5);
+      --neon-border: rgba(255, 0, 180, 0.9);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; user-select: none; }
@@ -47,49 +51,61 @@
     body {
       width: 100vw; height: 100dvh; background: var(--bg); color: var(--text); overflow: hidden;
       background-image: 
-        radial-gradient(circle at 10% 15%, rgba(244, 63, 94, 0.15) 0%, transparent 28%),
-        radial-gradient(circle at 90% 85%, rgba(139, 92, 246, 0.2) 0%, transparent 35%),
-        radial-gradient(circle at 50% 50%, rgba(217, 70, 239, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 10% 15%, rgba(255, 42, 133, 0.3) 0%, transparent 35%),
+        radial-gradient(circle at 90% 85%, rgba(176, 30, 255, 0.3) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(217, 70, 239, 0.2) 0%, transparent 50%);
       position: relative; transition: background 0.4s, color 0.4s;
     }
 
     .app-screen { width: 100vw; height: 100dvh; display: flex; flex-direction: column; position: relative; z-index: 1; }
 
-    .ptr-indicator {
-      position: absolute; top: 55px; left: 50%; transform: translateX(-50%) translateY(-50px);
-      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
-      padding: 6px 14px; font-size: 0.72rem; font-weight: 800; color: var(--primary);
-      box-shadow: var(--shadow-sm); z-index: 90; opacity: 0; transition: transform 0.2s ease, opacity 0.2s ease;
-      display: flex; align-items: center; gap: 6px; pointer-events: none;
-    }
-    .ptr-indicator.visible { opacity: 1; transform: translateX(-50%) translateY(10px); }
-
+    /* HEADER PROFIL NEON VIBRANT */
     .app-bar {
-      background: linear-gradient(135deg, #a21caf 0%, #7c3aed 50%, #f43f5e 100%);
-      color: #ffffff; padding: 12px 18px;
+      background: linear-gradient(135deg, #ff1493 0%, #d946ef 50%, #8a2be2 100%);
+      color: #ffffff; padding: 14px 18px;
       display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
-      box-shadow: 0 4px 25px rgba(162, 28, 175, 0.35); position: relative; z-index: 20;
+      box-shadow: 0 6px 30px rgba(255, 20, 147, 0.45), 0 0 15px rgba(217, 70, 239, 0.4);
+      position: relative; z-index: 20;
+      border-bottom-left-radius: 22px; border-bottom-right-radius: 22px;
     }
+    body.dark-mode .app-bar {
+      border-bottom: 2px solid rgba(255, 0, 200, 0.8);
+      box-shadow: 0 0 25px rgba(255, 0, 150, 0.7);
+    }
+
     .brand-title { font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; }
     
-    .profile-avatar-header, .avatar-initial {
-      width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
-      border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-      background: linear-gradient(135deg, #d946ef, #8b5cf6); color: white;
-      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;
+    .profile-avatar-header {
+      width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
+      border: 2px solid #ffffff; box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+      background: linear-gradient(135deg, #ff2a85, #b01eff); color: white;
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;
     }
 
+    /* TOMBOL KELOPAK TULIP BERCANHAYA (NEON GLOW) */
+    .btn-tulip {
+      border-radius: 26px 10px 26px 10px !important;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+      position: relative; overflow: hidden;
+      box-shadow: 0 6px 20px rgba(255, 42, 133, 0.35);
+    }
+    body.dark-mode .btn-tulip {
+      box-shadow: 0 0 20px rgba(255, 0, 150, 0.7), 0 0 10px rgba(176, 30, 255, 0.5) !important;
+      border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    }
+    .btn-tulip:active { transform: scale(0.96); }
+
     .more-menu-btn {
-      background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.35);
-      color: white; border-radius: 12px; width: 36px; height: 36px;
+      background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.5);
+      color: white; border-radius: 18px 8px 18px 8px; width: 38px; height: 38px;
       font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      backdrop-filter: blur(4px); transition: all 0.2s;
+      backdrop-filter: blur(6px); transition: all 0.2s;
     }
     
     .dropdown-menu {
-      position: absolute; top: 58px; right: 18px; background: var(--card); border-radius: 18px;
-      box-shadow: var(--shadow-sm), var(--shadow-glow); border: 1px solid var(--border);
-      backdrop-filter: var(--card-blur); display: none; flex-direction: column; width: 200px; z-index: 100; overflow: hidden;
+      position: absolute; top: 62px; right: 18px; background: var(--card); border-radius: 22px;
+      box-shadow: var(--shadow-sm), var(--shadow-glow); border: 1.5px solid var(--neon-border);
+      backdrop-filter: var(--card-blur); display: none; flex-direction: column; width: 210px; z-index: 100; overflow: hidden;
     }
     .dropdown-menu.show { display: flex; }
     .dropdown-item {
@@ -97,78 +113,74 @@
       display: flex; align-items: center; gap: 10px; cursor: pointer; background: none; border: none; text-align: left;
     }
 
-    .content-area { flex: 1; overflow-y: auto; padding: 14px; position: relative; padding-bottom: 90px; -webkit-overflow-scrolling: touch; }
+    .content-area { flex: 1; overflow-y: auto; padding: 14px; position: relative; padding-bottom: 95px; -webkit-overflow-scrolling: touch; }
     .view-tab { display: none; }
-    .view-tab.active { display: block; animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .view-tab.active { display: block; animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* KARTU SALDO & KARTU UTAMA DENGAN EFEK NEON BERCANHAYA */
     .balance-card {
-      background: linear-gradient(135deg, #f43f5e 0%, #d946ef 50%, #8b5cf6 100%);
-      color: white; border-radius: 24px; padding: 20px; margin-bottom: 14px;
-      box-shadow: 0 12px 30px rgba(217, 70, 239, 0.4); position: relative; overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: linear-gradient(135deg, #ff007f 0%, #d946ef 50%, #8a2be2 100%);
+      color: white; border-radius: 28px 14px 28px 14px; padding: 22px; margin-bottom: 16px;
+      box-shadow: 0 14px 35px rgba(255, 0, 127, 0.4); position: relative; overflow: hidden;
+      border: 1.5px solid rgba(255, 255, 255, 0.5);
     }
+    body.dark-mode .balance-card {
+      box-shadow: 0 0 30px rgba(255, 0, 150, 0.6), inset 0 0 15px rgba(255, 255, 255, 0.2);
+      border: 1.5px solid rgba(255, 0, 200, 0.8);
+    }
+
     .balance-header { display: flex; justify-content: space-between; align-items: center; }
-    .balance-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.95; }
-    .balance-amount { font-size: 1.9rem; font-weight: 800; margin: 6px 0 14px 0; }
-    .eye-btn { background: rgba(255, 255, 255, 0.25); border: none; color: white; padding: 5px 10px; border-radius: 10px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+    .balance-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.95; }
+    .balance-amount { font-size: 2.1rem; font-weight: 800; margin: 6px 0 14px 0; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+    .eye-btn { background: rgba(255, 255, 255, 0.25); border: none; color: white; padding: 6px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
 
-    .balance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: rgba(255, 255, 255, 0.18); padding: 12px; border-radius: 16px; backdrop-filter: blur(8px); }
-    .sub-balance-val { font-size: 0.95rem; font-weight: 800; margin-top: 2px; }
+    .balance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; background: rgba(255, 255, 255, 0.22); padding: 12px; border-radius: 18px; backdrop-filter: blur(8px); }
+    .sub-balance-val { font-size: 0.98rem; font-weight: 800; margin-top: 2px; }
 
-    .budget-bar-bg { background: rgba(217, 70, 239, 0.12); border-radius: 10px; height: 10px; width: 100%; overflow: hidden; margin-top: 8px; }
-    .budget-bar-fill { background: linear-gradient(90deg, #d946ef 0%, #8b5cf6 100%); height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+    .budget-bar-bg { background: rgba(255, 42, 133, 0.2); border-radius: 10px; height: 10px; width: 100%; overflow: hidden; margin-top: 8px; }
+    .budget-bar-fill { background: linear-gradient(90deg, #ff2a85 0%, #b01eff 100%); height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
 
     .card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 22px;
+      background: var(--card); border: 1.5px solid var(--border); border-radius: 24px;
       padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow-sm); backdrop-filter: var(--card-blur);
     }
-    .card-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 12px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
-
-    .goal-card {
-      background: rgba(255, 255, 255, 0.7); border: 1px solid var(--border);
-      border-radius: 20px; padding: 14px; margin-bottom: 12px;
-      box-shadow: 0 4px 15px rgba(217, 70, 239, 0.05); transition: all 0.2s ease;
+    body.dark-mode .card {
+      border: 1.5px solid var(--neon-border);
+      box-shadow: 0 0 18px rgba(255, 0, 150, 0.25);
     }
-    body.dark-mode .goal-card { background: rgba(30, 12, 52, 0.6); }
 
-    .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .goal-title { font-size: 0.88rem; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 6px; }
-    .goal-badge {
-      background: linear-gradient(135deg, rgba(217, 70, 239, 0.15), rgba(139, 92, 246, 0.15));
-      color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 800;
-      border: 1px solid rgba(217, 70, 239, 0.3);
-    }
-    
-    .goal-amounts { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 6px; }
-    .goal-val-current { font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); }
-    body.dark-mode .goal-val-current { color: #f5d0fe; }
-    .goal-val-target { font-size: 0.72rem; color: var(--muted); font-weight: 700; }
+    .card-title { font-size: 0.92rem; font-weight: 800; margin-bottom: 12px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
 
-    .goal-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
-
+    /* WIDGET CATATAN MANIS TULIP AI DENGAN NEON GLOW */
     .ai-widget {
-      background: linear-gradient(135deg, rgba(217, 70, 239, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%);
-      border: 1px solid var(--border); border-radius: 18px; padding: 12px 14px; margin-bottom: 14px;
+      background: linear-gradient(135deg, rgba(255, 42, 133, 0.18) 0%, rgba(176, 30, 255, 0.2) 100%);
+      border: 1.5px solid var(--border); border-radius: 22px 10px 22px 10px; padding: 14px 16px; margin-bottom: 16px;
       display: flex; gap: 12px; align-items: center; position: relative; backdrop-filter: var(--card-blur);
     }
+    body.dark-mode .ai-widget {
+      border: 1.5px solid var(--neon-border);
+      box-shadow: 0 0 20px rgba(255, 0, 180, 0.3);
+    }
+
     .ai-widget-icon {
-      width: 36px; height: 36px; border-radius: 12px; background: var(--primary);
-      color: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+      width: 40px; height: 40px; border-radius: 16px 6px 16px 6px; background: linear-gradient(135deg, #ff2a85, #b01eff);
+      color: white; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+      box-shadow: 0 4px 15px rgba(255, 42, 133, 0.4);
     }
     .ai-widget-content { flex: 1; }
-    .ai-widget-tag { font-size: 0.65rem; font-weight: 800; color: var(--primary); text-transform: uppercase; }
-    .ai-widget-text { font-size: 0.76rem; font-weight: 700; color: var(--text); margin-top: 2px; line-height: 1.35; }
+    .ai-widget-tag { font-size: 0.68rem; font-weight: 800; color: var(--primary-dark); text-transform: uppercase; font-family: 'Playfair Display', serif; }
+    .ai-widget-text { font-size: 0.78rem; font-weight: 700; color: var(--text); margin-top: 2px; line-height: 1.42; font-style: italic; }
 
     .profile-banner-container { position: relative; margin-bottom: 55px; }
     .profile-card-header {
-      position: relative; height: 190px; border-radius: 22px; overflow: hidden;
-      display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-      background: linear-gradient(135deg, #a21caf, #7c3aed);
+      position: relative; height: 190px; border-radius: 24px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      background: linear-gradient(135deg, #ff007f, #8a2be2);
     }
     .profile-bg-blur {
       position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
@@ -178,8 +190,12 @@
       position: absolute; bottom: -42px; left: 50%; transform: translateX(-50%);
       width: 96px; height: 96px; border-radius: 50%;
       border: 4px solid var(--card); box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 5;
-      overflow: hidden; background: linear-gradient(135deg, #d946ef, #8b5cf6);
+      overflow: hidden; background: linear-gradient(135deg, #ff2a85, #b01eff);
       display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 2.2rem;
+    }
+    body.dark-mode .profile-avatar-wrapper {
+      box-shadow: 0 0 25px rgba(255, 0, 180, 0.8);
+      border: 3px solid #ff52be;
     }
     .profile-avatar-img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -187,74 +203,91 @@
     .form-group { margin-bottom: 12px; }
     .form-label { display: block; font-size: 0.68rem; font-weight: 800; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; }
     .form-input, .form-select {
-      width: 100%; padding: 11px 14px; border-radius: 14px; border: 1px solid var(--border);
+      width: 100%; padding: 11px 14px; border-radius: 16px; border: 1.5px solid var(--border);
       font-size: 0.85rem; font-weight: 700; outline: none; background: var(--input-bg); color: var(--text);
     }
+    body.dark-mode .form-input, body.dark-mode .form-select {
+      border: 1.5px solid rgba(255, 0, 180, 0.5);
+    }
 
-    .btn { padding: 12px; border-radius: 14px; border: none; font-weight: 800; font-size: 0.85rem; cursor: pointer; width: 100%; text-align: center; }
-    .btn-primary { background: linear-gradient(135deg, #d946ef 0%, #a21caf 100%); color: white; }
-    .btn-info { background: #8b5cf6; color: white; }
-    .btn-warning { background: #f97316; color: white; }
-    .btn-sm { padding: 6px 12px; font-size: 0.72rem; border-radius: 10px; width: auto; }
+    .btn { padding: 12px; border-radius: 16px; border: none; font-weight: 800; font-size: 0.85rem; cursor: pointer; width: 100%; text-align: center; }
+    .btn-primary { background: linear-gradient(135deg, #ff2a85 0%, #b01eff 100%); color: white; }
+    .btn-info { background: #b01eff; color: white; }
+    .btn-warning { background: #ff9100; color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 0.72rem; border-radius: 12px; width: auto; }
 
     .type-selector { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
     .type-btn {
-      padding: 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--input-bg);
-      color: var(--muted); font-size: 0.8rem; font-weight: 800; text-align: center; cursor: pointer;
+      padding: 10px; border-radius: 16px 6px 16px 6px; border: 1.5px solid var(--border); background: var(--input-bg);
+      color: var(--muted); font-size: 0.8rem; font-weight: 800; text-align: center; cursor: pointer; transition: all 0.2s;
     }
-    .type-btn.active-income { background: rgba(16, 185, 129, 0.12); border-color: #10b981; color: #10b981; }
-    .type-btn.active-expense { background: rgba(244, 63, 94, 0.12); border-color: #f43f5e; color: #f43f5e; }
+    .type-btn.active-income { background: rgba(0, 230, 118, 0.18); border-color: #00e676; color: #00e676; }
+    .type-btn.active-expense { background: rgba(255, 23, 68, 0.18); border-color: #ff1744; color: #ff1744; }
 
     .tx-item {
       display: flex; justify-content: space-between; align-items: center;
       padding: 12px 0; border-bottom: 1px dashed var(--border);
     }
-    .tx-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-right: 10px; flex-shrink: 0; }
-    .tx-icon-income { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-    .tx-icon-expense { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
+    .tx-icon { width: 38px; height: 38px; border-radius: 14px 4px 14px 4px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-right: 10px; flex-shrink: 0; }
+    .tx-icon-income { background: rgba(0, 230, 118, 0.18); color: #00e676; }
+    .tx-icon-expense { background: rgba(255, 23, 68, 0.18); color: #ff1744; }
     .tx-info { flex: 1; }
     .tx-title { font-weight: 800; font-size: 0.82rem; color: var(--text); }
     .tx-date { font-size: 0.68rem; color: var(--muted); font-weight: 600; }
     .tx-amount { font-weight: 800; font-size: 0.88rem; text-align: right; }
-    .tx-amount-income { color: #10b981; }
-    .tx-amount-expense { color: #f43f5e; }
+    .tx-amount-income { color: #00e676; }
+    .tx-amount-expense { color: #ff1744; }
 
     .admin-avatar {
       width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
-      border: 1px solid var(--primary); background: #d946ef; color: white;
+      border: 1px solid var(--primary); background: #ff2a85; color: white;
       display: inline-flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800;
     }
 
+    /* NAVBAR BAWAH DENGAN EFEK NEON GLOW */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg);
-      border-top: 1px solid var(--border); display: flex; justify-content: space-between;
-      padding: 10px 4px calc(10px + env(safe-area-inset-bottom)); z-index: 50;
-      backdrop-filter: blur(16px); box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      border-top: 1.5px solid var(--border); display: flex; justify-content: space-between;
+      padding: 10px 6px calc(10px + env(safe-area-inset-bottom)); z-index: 50;
+      backdrop-filter: blur(18px); box-shadow: 0 -6px 25px rgba(255, 42, 133, 0.2);
+      border-top-left-radius: 22px; border-top-right-radius: 22px;
     }
+    body.dark-mode .bottom-nav {
+      border-top: 1.5px solid var(--neon-border);
+      box-shadow: 0 -5px 25px rgba(255, 0, 180, 0.4);
+    }
+
     .nav-btn {
       background: none; border: none; font-size: 0.62rem; font-weight: 700;
       color: var(--muted); display: flex; flex-direction: column; align-items: center;
-      gap: 3px; cursor: pointer; flex: 1; transition: all 0.2s;
+      gap: 3px; cursor: pointer; flex: 1; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .nav-btn .icon { font-size: 1.15rem; }
-    .nav-btn.active { color: var(--primary); font-weight: 800; transform: translateY(-2px); }
+    .nav-btn .icon { font-size: 1.2rem; }
+    .nav-btn.active { color: var(--primary-dark); font-weight: 800; transform: translateY(-3px); }
+    body.dark-mode .nav-btn.active { color: #ff52be; text-shadow: 0 0 10px rgba(255, 0, 180, 0.8); }
 
     .toast-container {
       position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
       z-index: 200; display: flex; flex-direction: column; gap: 8px; width: 90%; max-width: 360px; pointer-events: none;
     }
     .toast {
-      background: #3b0764; color: #ffffff; padding: 12px 16px; border-radius: 16px;
+      background: #3b003a; color: #ffffff; padding: 12px 16px; border-radius: 18px;
       font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 10px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4); opacity: 0; transform: translateY(-20px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); opacity: 0; transform: translateY(-20px);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    body.dark-mode .toast {
+      border: 1px solid var(--neon-border);
+      box-shadow: 0 0 20px rgba(255, 0, 180, 0.5);
     }
     .toast.show { opacity: 1; transform: translateY(0); }
     .toast-success { border-left: 4px solid var(--primary); }
     .toast-error { border-left: 4px solid var(--danger); }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(6px); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
-    .modal-card { background: var(--card); width: 100%; border-radius: 26px 26px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); max-height: 85dvh; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); display: none; align-items: flex-end; justify-content: center; z-index: 100; }
+    .modal-card { background: var(--card); width: 100%; border-radius: 28px 28px 0 0; padding: 22px 18px calc(22px + env(safe-area-inset-bottom)); max-height: 85dvh; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+    body.dark-mode .modal-card { border-top: 2px solid var(--neon-border); box-shadow: 0 -10px 30px rgba(255, 0, 180, 0.4); }
+
     .modal-header { display: flex; justify-content: space-between; align-items: center; }
     .modal-title { font-size: 1rem; font-weight: 800; }
     .close-btn { background: var(--input-bg); color: var(--text); border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: 800; cursor: pointer; }
@@ -264,16 +297,15 @@
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
 
-    .admin-badge { background: #f43f5e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-left: 6px; }
+    .admin-badge { background: #ff1744; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-left: 6px; }
   </style>
 </head>
 <body>
 
   <div class="app-screen">
     <div class="toast-container" id="toastContainer"></div>
-    <div class="ptr-indicator" id="ptrIndicator">🔄 Memperbarui Data...</div>
 
-    <!-- HEADER PROFIL -->
+    <!-- HEADER PROFIL SOFT TULIP -->
     <div class="app-bar">
       <div class="brand-title">
         <div id="headerAvatar" class="profile-avatar-header">DI</div>
@@ -327,13 +359,14 @@
           </div>
         </div>
 
+        <!-- WIDGET PESAN HANGAT TULIP AI -->
         <div class="ai-widget">
-          <div class="ai-widget-icon">✨</div>
+          <div class="ai-widget-icon">🌷</div>
           <div class="ai-widget-content">
-            <div class="ai-widget-tag">Tulip AI Motivation</div>
-            <div class="ai-widget-text" id="aiQuoteText">Memuat inspirasi hari ini...</div>
+            <div class="ai-widget-tag">Tulip Gentle Notes</div>
+            <div class="ai-widget-text" id="aiQuoteText">Memuat catatan manis hari ini...</div>
           </div>
-          <button style="background:none; border:none; cursor:pointer; font-size:0.9rem; color:var(--muted);" id="btnRefreshAi">🔄</button>
+          <button style="background:none; border:none; cursor:pointer; font-size:1rem; color:var(--muted);" id="btnRefreshAi">✨</button>
         </div>
 
         <div class="card">
@@ -341,8 +374,8 @@
           <div class="chart-box">
             <canvas id="pieChartCanvas" width="180" height="180"></canvas>
             <div class="chart-legend">
-              <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div><span>Pemasukan</span></div>
-              <div class="legend-item"><div class="legend-dot" style="background:#f43f5e;"></div><span>Pengeluaran</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#00e676;"></div><span>Pemasukan</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#ff1744;"></div><span>Pengeluaran</span></div>
             </div>
           </div>
         </div>
@@ -377,7 +410,7 @@
 
           <div class="form-group">
             <label class="form-label">KETERANGAN / CATATAN</label>
-            <input type="text" id="txTitle" class="form-input" placeholder="Contoh: Belanja Tulip, Gaji Bulanan">
+            <input type="text" id="txTitle" class="form-input" placeholder="Contoh: Belanja Tulip, Jajan Boba Kesukaan">
           </div>
 
           <div class="grid-2">
@@ -401,7 +434,7 @@
             <select id="txCategory" class="form-select"></select>
           </div>
 
-          <button class="btn btn-primary" id="btnSaveTx">🌷 SIMPAN TRANSAKSI</button>
+          <button class="btn btn-primary btn-tulip" id="btnSaveTx">🌷 SIMPAN TRANSAKSI</button>
         </div>
 
         <div class="card">
@@ -421,14 +454,14 @@
             <label class="form-label">BATAS MAXIMAL PENGELUARAN (RP)</label>
             <input type="number" id="budgetLimitInput" class="form-input" placeholder="Contoh: 3000000">
           </div>
-          <button class="btn btn-info" id="btnSaveBudget">SIMPAN LIMIT BELANJA</button>
+          <button class="btn btn-info btn-tulip" id="btnSaveBudget">SIMPAN LIMIT BELANJA</button>
         </div>
 
         <div class="card">
-          <div class="card-title">🏛️ Target Celengan Impian</div>
+          <div class="card-title">🏛️ Target Celengan Impian Kita</div>
           <div class="form-group">
             <label class="form-label">NAMA TARGET IMPIAN</label>
-            <input type="text" id="saveGoalName" class="form-input" placeholder="Contoh: Beli Laptop Baru">
+            <input type="text" id="saveGoalName" class="form-input" placeholder="Contoh: Beli Skincare, Liburan Bersama">
           </div>
           <div class="grid-2">
             <div class="form-group">
@@ -440,7 +473,7 @@
               <input type="number" id="saveCurrentAmount" class="form-input" placeholder="0">
             </div>
           </div>
-          <button class="btn btn-primary" id="btnAddSavingsGoal">+ TAMBAH TARGET TABUNGAN</button>
+          <button class="btn btn-primary btn-tulip" id="btnAddSavingsGoal">+ TAMBAH TARGET TABUNGAN</button>
         </div>
 
         <div id="savingsGoalList"></div>
@@ -491,11 +524,11 @@
 
           <div style="text-align:center; margin-bottom:18px;">
             <h3 id="profileDisplayName" style="font-size:1.15rem; font-weight:800;">Diki Iskandar</h3>
-            <p id="profileDisplayMention" style="font-size:0.75rem; color:var(--primary); font-weight:700;">@diki_iskandar</p>
-            <p id="profileDisplayBio" style="font-size:0.72rem; color:var(--muted); margin-top:4px;">Managing My Financial Freedom 🌷</p>
+            <p id="profileDisplayMention" style="font-size:0.75rem; color:var(--primary-dark); font-weight:700;">@diki_iskandar</p>
+            <p id="profileDisplayBio" style="font-size:0.72rem; color:var(--muted); margin-top:4px;">Building Our Bright Future Together 🌷💖</p>
           </div>
 
-          <button class="btn btn-info btn-sm" style="width:100%; margin-bottom:14px;" id="btnUploadAvatar">🖼️ Ubah Foto / Logo Profil</button>
+          <button class="btn btn-info btn-sm btn-tulip" style="width:100%; margin-bottom:14px;" id="btnUploadAvatar">🖼️ Ubah Foto / Logo Profil</button>
           <input type="file" id="profileImageInput" accept="image/*" style="display:none;">
 
           <div class="form-group">
@@ -518,13 +551,13 @@
             <input type="text" id="profDeviceId" class="form-input" readonly style="opacity:0.7; background:var(--border);">
           </div>
 
-          <button class="btn btn-primary" id="btnSaveProfile">💾 SIMPAN PERUBAHAN PROFIL</button>
+          <button class="btn btn-primary btn-tulip" id="btnSaveProfile">💾 SIMPAN PERUBAHAN PROFIL</button>
         </div>
       </div>
 
     </div>
 
-    <!-- BOTTOM NAVBAR -->
+    <!-- BOTTOM NAVBAR SOFT TULIP -->
     <div class="bottom-nav">
       <button class="nav-btn active" data-tab="tabDashboard"><span class="icon">📊</span><span>Dashboard</span></button>
       <button class="nav-btn" data-tab="tabTx"><span class="icon">🌷</span><span>Transaksi</span></button>
@@ -533,37 +566,20 @@
       <button class="nav-btn" data-tab="tabProfile"><span class="icon">👤</span><span>Profil</span></button>
     </div>
 
-    <!-- MODAL POPUP KUSTOM ISI/KURANG SALDO TABUNGAN -->
-    <div class="modal-overlay" id="quickSaldoModal">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div class="modal-title" id="quickSaldoTitle">💳 Update Saldo Tabungan</div>
-          <button class="close-btn" id="btnCloseQuickSaldo">✕</button>
-        </div>
-        <input type="hidden" id="quickSaldoGoalId">
-        
-        <div class="type-selector">
-          <div class="type-btn active-income" id="btnSaldoAdd">➕ Tambah Saldo</div>
-          <div class="type-btn" id="btnSaldoSub">➖ Kurangi Saldo</div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">NOMINAL SALDO (RP)</label>
-          <input type="number" id="quickSaldoAmount" class="form-input" placeholder="Contoh: 50000">
-        </div>
-
-        <button class="btn btn-primary" id="btnSubmitQuickSaldo">💾 SIMPAN PERUBAHAN SALDO</button>
-      </div>
-    </div>
-
     <!-- MODAL EDIT TRANSAKSI -->
     <div class="modal-overlay" id="editTxModal">
       <div class="modal-card">
         <div class="modal-header">
-          <div class="modal-title">Edit Transaksi</div>
+          <div class="modal-title">✏️ Edit Transaksi</div>
           <button class="close-btn" id="btnCloseEditTx">✕</button>
         </div>
         <input type="hidden" id="editTxId">
+        
+        <div class="type-selector">
+          <div class="type-btn" id="editBtnTypeExpense">💸 Pengeluaran</div>
+          <div class="type-btn" id="editBtnTypeIncome">💰 Pemasukan</div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">TANGGAL TRANSAKSI</label>
           <input type="date" id="editTxDate" class="form-input">
@@ -587,7 +603,36 @@
             </select>
           </div>
         </div>
-        <button class="btn btn-primary" id="btnUpdateTx">SIMPAN PERUBAHAN</button>
+        
+        <div class="form-group">
+          <label class="form-label">KATEGORI TRANSAKSI</label>
+          <select id="editTxCategory" class="form-select"></select>
+        </div>
+
+        <button class="btn btn-primary btn-tulip" id="btnUpdateTx">💾 SIMPAN PERUBAHAN</button>
+      </div>
+    </div>
+
+    <!-- MODAL POPUP SALDO TABUNGAN -->
+    <div class="modal-overlay" id="quickSaldoModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title" id="quickSaldoTitle">💳 Update Saldo Tabungan</div>
+          <button class="close-btn" id="btnCloseQuickSaldo">✕</button>
+        </div>
+        <input type="hidden" id="quickSaldoGoalId">
+        
+        <div class="type-selector">
+          <div class="type-btn active-income" id="btnSaldoAdd">➕ Tambah Saldo</div>
+          <div class="type-btn" id="btnSaldoSub">➖ Kurangi Saldo</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">NOMINAL SALDO (RP)</label>
+          <input type="number" id="quickSaldoAmount" class="form-input" placeholder="Contoh: 50000">
+        </div>
+
+        <button class="btn btn-primary btn-tulip" id="btnSubmitQuickSaldo">💾 SIMPAN PERUBAHAN SALDO</button>
       </div>
     </div>
 
@@ -613,7 +658,7 @@
             <input type="number" id="editSavingsCurrent" class="form-input">
           </div>
         </div>
-        <button class="btn btn-primary" id="btnUpdateSavings">SIMPAN PERUBAHAN TARGET</button>
+        <button class="btn btn-primary btn-tulip" id="btnUpdateSavings">SIMPAN PERUBAHAN TARGET</button>
       </div>
     </div>
 
@@ -633,9 +678,9 @@
         </div>
         <div class="form-group">
           <label class="form-label">NAMA KATEGORI BARU</label>
-          <input type="text" id="catNameInput" class="form-input" placeholder="Contoh: 🍕 Jajan Malam">
+          <input type="text" id="catNameInput" class="form-input" placeholder="Contoh: 🍕 Jajan Berdua">
         </div>
-        <button class="btn btn-primary" id="btnAddCategory">+ TAMBAH KATEGORI</button>
+        <button class="btn btn-primary btn-tulip" id="btnAddCategory">+ TAMBAH KATEGORI</button>
         <div id="customCategoryList" style="margin-top:14px; max-height:200px; overflow-y:auto;"></div>
       </div>
     </div>
@@ -654,7 +699,7 @@
           </select>
         </div>
         <div style="font-size:0.75rem; color:var(--muted); margin-bottom:8px;">
-          Dipilih: <b id="adminSelectedLabel" style="color:var(--primary);">Semua Device</b>
+          Dipilih: <b id="adminSelectedLabel" style="color:var(--primary-dark);">Semua Device</b>
         </div>
         <div id="adminTxList" style="max-height:300px; overflow-y:auto;"></div>
       </div>
@@ -675,19 +720,19 @@
         localStorage.setItem('fintrack_device_id', deviceId);
       }
 
-      // ID DEVICE ADMIN DIKUNCI KE DEV-287810
       const ADMIN_DEVICE_ID = "DEV-287810";
       const IS_ADMIN_DEVICE = (deviceId === ADMIN_DEVICE_ID);
 
       let allCloudTransactions = [];
       let selectedAdminDeviceFilter = "ALL";
       let currentType = 'expense';
+      let editCurrentType = 'expense';
       let quickSaldoMode = 'add';
       let isBalanceHidden = false;
       let isDarkMode = localStorage.getItem('fintrack_theme') === 'dark';
 
       let appProfile = JSON.parse(localStorage.getItem('fintrack_profile')) || { 
-        fullName: "Diki Iskandar", mention: "diki_iskandar", bio: "Managing My Financial Freedom 🌷", avatar: "" 
+        fullName: "Diki Iskandar", mention: "diki_iskandar", bio: "Building Our Bright Future Together 🌷💖", avatar: "" 
       };
 
       let transactions = JSON.parse(localStorage.getItem('fintrack_data')) || [];
@@ -699,11 +744,15 @@
         income: ['💼 Gaji & Bonus', '🛍️ Hasil Penjualan', '🎁 Hadiah / Transfer', '💰 Investasi & Lainnya']
       };
 
+      // KATAKATA MOTIVASI, KEINGINAN & PENYEMANGAT MANIS TULIP AI
       const aiQuotes = [
-        "🌷 'Jangan menabung apa yang tersisa setelah dibelanjakan, belanjakan apa yang tersisa setelah menabung.'",
-        "✨ Uang yang kamu hemat hari ini adalah kebebasan yang kamu beli di masa depan!",
-        "💡 Aturan 50/30/20: 50% Kebutuhan, 30% Keinginan, 20% langsung ke Tabungan!",
-        "🌸 Tulip butuh waktu untuk mekar indah, begitu pula finansialmu. Tetap disiplin ya!"
+        "🌷 'Semangat ya hari ini! Setiap usaha kecilmu sedang menenun masa depan yang sangat indah.'",
+        "💖 'Menabung itu bukan tentang menahan diri, tapi tentang memberi rasa aman dan kenyamanan untuk hari esok.'",
+        "✨ 'Kamu luar biasa! Tetap tenang dan percaya proses ya, bunga Tulip pun butuh waktu untuk mekar sempurna.'",
+        "🌸 'Mengatur keuangan dengan bijak adalah bentuk rasa sayang terbaik untuk impian-impian manis kita.'",
+        "💡 'Jangan khawatir tentang hal yang belum terjadi. Fokus melangkah satu demi satu dengan senyuman.'",
+        "🌷 'Semoga harimu dipenuhi kebahagiaan dan kehangatan. Jangan lupa istirahat yang cukup ya!'",
+        "🌱 'Setiap Rupiah yang kamu sisihkan adalah benih kebaikan yang akan tumbuh menjadi kebebasanmu nanti.'"
       ];
 
       function getInitials(name) {
@@ -791,6 +840,9 @@
       document.getElementById('adminDeviceSelect').addEventListener('change', filterAdminDevice);
       document.getElementById('repMonthFilter').addEventListener('change', renderReports);
 
+      document.getElementById('editBtnTypeExpense').addEventListener('click', () => selectEditType('expense'));
+      document.getElementById('editBtnTypeIncome').addEventListener('click', () => selectEditType('income'));
+
       document.addEventListener('click', hideDropdown);
 
       function generateAiQuote() {
@@ -809,8 +861,6 @@
           if(data) {
             allCloudTransactions = data;
             
-            // JIKA ADMIN: TAMPILKAN GABUNGAN SEMUA TRANSAKSI USER
-            // JIKA USER BIASA: HANYA TAMPILKAN TRANSAKSI MILIK SENDIRI
             if (IS_ADMIN_DEVICE) {
               transactions = data;
             } else {
@@ -861,7 +911,7 @@
         document.getElementById('txTitle').value = '';
         document.getElementById('txAmount').value = '';
         
-        showToast('Transaksi Berhasil Masuk Cloud! ☁️');
+        showToast('Transaksi Berhasil Tersimpan! 🌷☁️');
         await loadTransactionsFromSupabase();
       }
 
@@ -876,7 +926,20 @@
         document.getElementById('editTxAmount').value = t.amount;
         document.getElementById('editTxAccount').value = t.account || 'Tunai';
 
+        selectEditType(t.type || 'expense');
+        document.getElementById('editTxCategory').value = t.category;
+
         openModal('editTxModal');
+      }
+
+      function selectEditType(type) {
+        editCurrentType = type;
+        document.getElementById('editBtnTypeExpense').className = type === 'expense' ? 'type-btn active-expense' : 'type-btn';
+        document.getElementById('editBtnTypeIncome').className = type === 'income' ? 'type-btn active-income' : 'type-btn';
+        
+        const catSelect = document.getElementById('editTxCategory');
+        catSelect.innerHTML = '';
+        categories[type].forEach(cat => { catSelect.innerHTML += `<option value="${cat}">${cat}</option>`; });
       }
 
       async function updateTransaction() {
@@ -885,11 +948,22 @@
         const title = document.getElementById('editTxTitle').value.trim();
         const amount = parseFloat(document.getElementById('editTxAmount').value) || 0;
         const account = document.getElementById('editTxAccount').value;
+        const category = document.getElementById('editTxCategory').value;
 
         if(!title || amount <= 0) return showToast('Isi keterangan & nominal valid!', 'error');
 
         try {
-          let { error } = await supabase.from('transactions').update({ date: dateVal, title: title, amount: amount, account: account }).eq('id', id);
+          let { error } = await supabase.from('transactions')
+            .update({ 
+              date: dateVal, 
+              title: title, 
+              amount: amount, 
+              account: account, 
+              type: editCurrentType, 
+              category: category 
+            })
+            .eq('id', id);
+
           if(error) {
             showToast(`Gagal update cloud: ${error.message}`, 'error');
             return;
@@ -984,8 +1058,8 @@
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
-                <b style="color:${isInc ? '#10b981' : '#f43f5e'}">${isInc ? '+' : '-'}Rp ${t.amount.toLocaleString('id-ID')}</b>
-                <button class="btn btn-warning btn-sm" onclick="openEditTxModal('${t.id}')">✏️ Edit</button>
+                <b style="color:${isInc ? '#00e676' : '#ff1744'}">${isInc ? '+' : '-'}Rp ${t.amount.toLocaleString('id-ID')}</b>
+                <button class="btn btn-warning btn-sm btn-tulip" onclick="openEditTxModal('${t.id}')">✏️ Edit</button>
               </div>
             </div>
           `;
@@ -1109,19 +1183,19 @@
           totalSavingsSum += s.current;
           const pct = Math.min(100, Math.round((s.current / s.target) * 100));
           container.innerHTML += `
-            <div class="goal-card">
-              <div class="goal-header">
-                <div class="goal-title">🎯 ${s.name}</div>
-                <div class="goal-badge">${pct}% Tercapai</div>
+            <div class="goal-card" style="border-radius:22px 8px 22px 8px; border:1.5px solid var(--border); padding:14px; margin-bottom:12px; background:var(--card);">
+              <div class="goal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div class="goal-title" style="font-size:0.88rem; font-weight:800;">🎯 ${s.name}</div>
+                <div class="goal-badge" style="background:rgba(255, 42, 133, 0.2); color:var(--primary-dark); padding:4px 10px; border-radius:12px; font-size:0.7rem; font-weight:800;">${pct}% Tercapai</div>
               </div>
               
-              <div class="goal-amounts">
+              <div class="goal-amounts" style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:6px;">
                 <div>
                   <div style="font-size:0.65rem; color:var(--muted); font-weight:700;">TERKUMPUL</div>
-                  <div class="goal-val-current">${isBalanceHidden ? 'Rp •••••••' : 'Rp ' + s.current.toLocaleString('id-ID')}</div>
+                  <div class="goal-val-current" style="font-size:1.1rem; font-weight:800; color:var(--primary-dark);">${isBalanceHidden ? 'Rp •••••••' : 'Rp ' + s.current.toLocaleString('id-ID')}</div>
                 </div>
                 <div style="text-align:right;">
-                  <div class="goal-val-target">Target: Rp ${s.target.toLocaleString('id-ID')}</div>
+                  <div class="goal-val-target" style="font-size:0.72rem; color:var(--muted); font-weight:700;">Target: Rp ${s.target.toLocaleString('id-ID')}</div>
                 </div>
               </div>
 
@@ -1129,10 +1203,10 @@
                 <div class="budget-bar-fill" style="width:${pct}%;"></div>
               </div>
 
-              <div class="goal-actions">
-                <button class="btn btn-info btn-sm" onclick="quickUpdateSavingsAmount(${s.id})">➕ Saldo</button>
-                <button class="btn btn-warning btn-sm" onclick="openEditSavingsModal(${s.id})">✏️ Edit</button>
-                <button class="btn btn-sm" style="background:rgba(244, 63, 94, 0.12); color:#f43f5e;" onclick="deleteSavingsGoal(${s.id})">🗑️ Hapus</button>
+              <div class="goal-actions" style="display:flex; gap:8px; margin-top:10px; justify-content:flex-end;">
+                <button class="btn btn-info btn-sm btn-tulip" onclick="quickUpdateSavingsAmount(${s.id})">➕ Saldo</button>
+                <button class="btn btn-warning btn-sm btn-tulip" onclick="openEditSavingsModal(${s.id})">✏️ Edit</button>
+                <button class="btn btn-sm btn-tulip" style="background:rgba(255, 23, 68, 0.2); color:#ff1744;" onclick="deleteSavingsGoal(${s.id})">🗑️ Hapus</button>
               </div>
             </div>
           `;
@@ -1238,19 +1312,19 @@
 
         if (total === 0) {
           ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-          ctx.strokeStyle = isDarkMode ? 'rgba(168, 85, 247, 0.2)' : '#f5d0fe';
+          ctx.strokeStyle = isDarkMode ? 'rgba(255, 0, 180, 0.25)' : '#fff0f7';
           ctx.lineWidth = 18; ctx.stroke(); return;
         }
 
         const incomeAngle = (incomeSum / total) * 2 * Math.PI;
         ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, incomeAngle);
-        ctx.strokeStyle = '#10b981'; ctx.lineWidth = 18; ctx.stroke();
+        ctx.strokeStyle = '#00e676'; ctx.lineWidth = 18; ctx.stroke();
 
         ctx.beginPath(); ctx.arc(centerX, centerY, radius, incomeAngle, 2 * Math.PI);
-        ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 18; ctx.stroke();
+        ctx.strokeStyle = '#ff1744'; ctx.lineWidth = 18; ctx.stroke();
 
         const expPct = Math.round((expenseSum / total) * 100);
-        ctx.fillStyle = isDarkMode ? '#f5d0fe' : '#3b0764';
+        ctx.fillStyle = isDarkMode ? '#ffb8e8' : '#3b003a';
         ctx.font = 'bold 12px Plus Jakarta Sans'; ctx.textAlign = 'center';
         ctx.fillText(`${expPct}% Out`, centerX, centerY + 4);
       }
@@ -1273,12 +1347,12 @@
           const cX = compCanvas.width / 2; const cY = compCanvas.height / 2;
 
           if(tot === 0) {
-            cCtx.font = 'bold 11px Plus Jakarta Sans'; cCtx.fillStyle = isDarkMode ? '#c084fc' : '#86198f'; cCtx.textAlign = 'center';
+            cCtx.font = 'bold 11px Plus Jakarta Sans'; cCtx.fillStyle = isDarkMode ? '#ff52be' : '#c0007a'; cCtx.textAlign = 'center';
             cCtx.fillText('Belum ada data transaksi', cX, cY);
           } else {
             const incAngle = (incTotal / tot) * 2 * Math.PI;
-            cCtx.beginPath(); cCtx.arc(cX, cY, 50, 0, incAngle); cCtx.strokeStyle = '#10b981'; cCtx.lineWidth = 14; cCtx.stroke();
-            cCtx.beginPath(); cCtx.arc(cX, cY, 50, incAngle, 2 * Math.PI); cCtx.strokeStyle = '#f43f5e'; cCtx.lineWidth = 14; cCtx.stroke();
+            cCtx.beginPath(); cCtx.arc(cX, cY, 50, 0, incAngle); cCtx.strokeStyle = '#00e676'; cCtx.lineWidth = 14; cCtx.stroke();
+            cCtx.beginPath(); cCtx.arc(cX, cY, 50, incAngle, 2 * Math.PI); cCtx.strokeStyle = '#ff1744'; cCtx.lineWidth = 14; cCtx.stroke();
           }
         }
 
@@ -1292,7 +1366,7 @@
 
           const catKeys = Object.keys(summary);
           if(catKeys.length === 0) {
-            bCtx.font = 'bold 11px Plus Jakarta Sans'; bCtx.fillStyle = isDarkMode ? '#c084fc' : '#86198f'; bCtx.textAlign = 'center';
+            bCtx.font = 'bold 11px Plus Jakarta Sans'; bCtx.fillStyle = isDarkMode ? '#ff52be' : '#c0007a'; bCtx.textAlign = 'center';
             bCtx.fillText('Tidak ada pengeluaran di bulan ini', barCanvas.width / 2, barCanvas.height / 2);
           } else {
             const maxVal = Math.max(...Object.values(summary));
@@ -1304,8 +1378,8 @@
               const x = startX + idx * (barWidth + spacing);
               const y = barCanvas.height - h - 25;
 
-              bCtx.fillStyle = '#d946ef'; bCtx.fillRect(x, y, barWidth, h);
-              bCtx.fillStyle = isDarkMode ? '#f5d0fe' : '#3b0764';
+              bCtx.fillStyle = '#ff2a85'; bCtx.fillRect(x, y, barWidth, h);
+              bCtx.fillStyle = isDarkMode ? '#ffb8e8' : '#3b003a';
               bCtx.font = 'bold 9px Plus Jakarta Sans'; bCtx.textAlign = 'center';
               bCtx.fillText(`${Math.round((summary[cat]/expTotal)*100)}%`, x + barWidth/2, y - 5);
             });
@@ -1363,7 +1437,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:6px;">
                   <div class="tx-amount ${isIncome ? 'tx-amount-income' : 'tx-amount-expense'}">${isIncome ? '+' : '-'}${displayAmt}</div>
-                  <button class="btn btn-warning btn-sm" onclick="openEditTxModal('${t.id}')">✏️</button>
+                  <button class="btn btn-warning btn-sm btn-tulip" onclick="openEditTxModal('${t.id}')">✏️</button>
                   <button onclick="deleteTransaction('${t.id}')" style="background:none; border:none; cursor:pointer; font-size:0.8rem; opacity:0.6;">🗑️</button>
                 </div>
               </div>
@@ -1429,7 +1503,7 @@
         
         document.getElementById('profileDisplayName').innerText = appProfile.fullName || "Diki Iskandar";
         document.getElementById('profileDisplayMention').innerText = "@" + (appProfile.mention || "diki_iskandar");
-        document.getElementById('profileDisplayBio').innerText = appProfile.bio || "Managing My Financial Freedom 🌷";
+        document.getElementById('profileDisplayBio').innerText = appProfile.bio || "Building Our Bright Future Together 🌷💖";
         
         updateAvatarUI();
         showToast('Profil Disimpan!');
