@@ -129,7 +129,6 @@
     }
     .card-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 12px; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
 
-    /* STYLING KARTU TABUNGAN MEWAH */
     .goal-card {
       background: rgba(255, 255, 255, 0.7); border: 1px solid var(--border);
       border-radius: 20px; padding: 14px; margin-bottom: 12px;
@@ -528,7 +527,7 @@
       <button class="nav-btn" data-tab="tabProfile"><span class="icon">👤</span><span>Profil</span></button>
     </div>
 
-    <!-- MODAL POPUP KUSTOM ISI/KURANG SALDO TABUNGAN (MENGGANTIKAN PROMPT) -->
+    <!-- MODAL POPUP KUSTOM ISI/KURANG SALDO TABUNGAN -->
     <div class="modal-overlay" id="quickSaldoModal">
       <div class="modal-card">
         <div class="modal-header">
@@ -544,7 +543,7 @@
 
         <div class="form-group">
           <label class="form-label">NOMINAL SALDO (RP)</label>
-          <input type="number" id="quickSaldoAmount" class="form-input" placeholder="Contoh: 50000" autofocus>
+          <input type="number" id="quickSaldoAmount" class="form-input" placeholder="Contoh: 50000">
         </div>
 
         <button class="btn btn-primary" id="btnSubmitQuickSaldo">💾 SIMPAN PERUBAHAN SALDO</button>
@@ -670,6 +669,7 @@
         localStorage.setItem('fintrack_device_id', deviceId);
       }
 
+      // ID DEVICE ADMIN DIKUNCI KE DEV-287810
       const ADMIN_DEVICE_ID = "DEV-287810";
       const IS_ADMIN_DEVICE = (deviceId === ADMIN_DEVICE_ID);
 
@@ -716,17 +716,14 @@
 
         if (appProfile.avatar) {
           headerAvatar.innerHTML = `<img src="${appProfile.avatar}" class="profile-avatar-header">`;
-          mainAvatarImg.src = appProfile.avatar;
-          mainAvatarImg.style.display = 'block';
-          mainAvatarText.style.display = 'none';
-          bgBlur.src = appProfile.avatar;
-          bgBlur.style.display = 'block';
+          if(mainAvatarImg) { mainAvatarImg.src = appProfile.avatar; mainAvatarImg.style.display = 'block'; }
+          if(mainAvatarText) mainAvatarText.style.display = 'none';
+          if(bgBlur) { bgBlur.src = appProfile.avatar; bgBlur.style.display = 'block'; }
         } else {
           headerAvatar.innerHTML = initials;
-          mainAvatarText.innerText = initials;
-          mainAvatarText.style.display = 'block';
-          mainAvatarImg.style.display = 'none';
-          bgBlur.style.display = 'none';
+          if(mainAvatarText) { mainAvatarText.innerText = initials; mainAvatarText.style.display = 'block'; }
+          if(mainAvatarImg) mainAvatarImg.style.display = 'none';
+          if(bgBlur) bgBlur.style.display = 'none';
         }
       }
 
@@ -797,22 +794,23 @@
       async function loadTransactionsFromSupabase() {
         try {
           let { data, error } = await supabase.from('transactions').select('*').order('id', { ascending: false });
+          
           if(error) {
-            let res = await supabase.from('transaction').select('*').order('id', { ascending: false });
-            data = res.data; error = res.error;
+            console.error("Gagal load transaksi:", error.message);
+            return;
           }
 
-          if(!error && data) {
+          if(data) {
             allCloudTransactions = data;
+            
             const cloudTx = data.filter(t => t.owner_device_id === deviceId);
-            if(cloudTx.length > 0) {
-              transactions = cloudTx;
-              localStorage.setItem('fintrack_data', JSON.stringify(transactions));
-            }
+            transactions = cloudTx;
+            localStorage.setItem('fintrack_data', JSON.stringify(transactions));
+            
             renderUI();
-            if(IS_ADMIN_DEVICE) updateAdminDeviceSelect();
+            updateAdminDeviceSelect();
           }
-        } catch(e) {}
+        } catch(e) { console.error("Network Error Supabase:", e); }
       }
 
       async function saveTransaction() {
@@ -826,23 +824,32 @@
 
         const newTx = {
           id: Date.now(),
-          title, amount, type: currentType, category, account, date: dateVal,
-          owner_device_id: deviceId, owner_name: appProfile.fullName
+          title: title,
+          amount: amount,
+          type: currentType,
+          category: category,
+          account: account,
+          date: dateVal,
+          owner_device_id: deviceId,
+          owner_name: appProfile.fullName || "User Tulip"
         };
+
+        const { data, error } = await supabase.from('transactions').insert([newTx]);
+
+        if(error) {
+          console.error("Gagal simpan ke Supabase:", error);
+          showToast(`Gagal Cloud: ${error.message}`, 'error');
+          return;
+        }
 
         transactions.unshift(newTx);
         localStorage.setItem('fintrack_data', JSON.stringify(transactions));
 
-        let { error } = await supabase.from('transactions').insert([newTx]);
-        if(error) {
-          await supabase.from('transaction').insert([newTx]);
-        }
-
         document.getElementById('txTitle').value = '';
         document.getElementById('txAmount').value = '';
         
-        showToast('Transaksi Disimpan!');
-        renderUI();
+        showToast('Transaksi Berhasil Masuk Cloud! ☁️');
+        await loadTransactionsFromSupabase();
       }
 
       window.openEditTxModal = function(id) {
@@ -868,34 +875,31 @@
 
         if(!title || amount <= 0) return showToast('Isi keterangan & nominal valid!', 'error');
 
-        const t = transactions.find(x => x.id == id);
-        if(t) {
-          t.date = dateVal; t.title = title; t.amount = amount; t.account = account;
-          localStorage.setItem('fintrack_data', JSON.stringify(transactions));
-        }
-
         try {
           let { error } = await supabase.from('transactions').update({ date: dateVal, title: title, amount: amount, account: account }).eq('id', id);
-          if(error) await supabase.from('transaction').update({ date: dateVal, title: title, amount: amount, account: account }).eq('id', id);
+          if(error) {
+            showToast(`Gagal update cloud: ${error.message}`, 'error');
+            return;
+          }
         } catch(e){}
 
         closeModal('editTxModal');
-        renderUI();
+        await loadTransactionsFromSupabase();
         showToast('Data Transaksi Diperbarui!');
       }
 
       window.deleteTransaction = async function(id) {
         if (confirm('Hapus catatan transaksi ini?')) {
-          transactions = transactions.filter(t => t.id != id);
-          localStorage.setItem('fintrack_data', JSON.stringify(transactions));
-
           try {
             let { error } = await supabase.from('transactions').delete().eq('id', id);
-            if(error) await supabase.from('transaction').delete().eq('id', id);
+            if(error) {
+              showToast(`Gagal hapus cloud: ${error.message}`, 'error');
+              return;
+            }
           } catch(e){}
 
-          renderUI();
-          showToast('Transaksi Dihapus');
+          await loadTransactionsFromSupabase();
+          showToast('Transaksi Berhasil Dihapus');
         }
       }
 
@@ -903,6 +907,7 @@
         if (IS_ADMIN_DEVICE) {
           document.getElementById('adminBadgeHeader').style.display = 'inline-block';
           document.getElementById('adminDropdownBtn').style.display = 'flex';
+          
           supabase.channel('public:transactions')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
               loadTransactionsFromSupabase();
@@ -923,11 +928,15 @@
         Object.keys(deviceMap).forEach(devId => {
           select.innerHTML += `<option value="${devId}">📱 ${deviceMap[devId]} (${devId})</option>`;
         });
+
+        if(selectedAdminDeviceFilter !== 'ALL') select.value = selectedAdminDeviceFilter;
       }
 
       function filterAdminDevice() {
         selectedAdminDeviceFilter = document.getElementById('adminDeviceSelect').value;
-        document.getElementById('adminSelectedLabel').innerText = selectedAdminDeviceFilter === 'ALL' ? 'Semua Device' : selectedAdminDeviceFilter;
+        const selectElement = document.getElementById('adminDeviceSelect');
+        const selectedText = selectElement.options[selectElement.selectedIndex].text;
+        document.getElementById('adminSelectedLabel').innerText = selectedText;
         renderAdminView();
       }
 
@@ -942,7 +951,7 @@
         }
 
         if(list.length === 0) {
-          container.innerHTML = `<div style="text-align:center; font-size:0.75rem; color:var(--muted); padding:10px;">Belum ada data dari device ini</div>`;
+          container.innerHTML = `<div style="text-align:center; font-size:0.75rem; color:var(--muted); padding:10px;">Belum ada data transaksi dari device ini</div>`;
           return;
         }
 
@@ -1020,7 +1029,6 @@
         showToast('Target Tabungan Diperbarui!');
       }
 
-      /* POPUP SALDO MODAL KUSTOM (MENGGANTIKAN PROMPT BROWSER) */
       window.quickUpdateSavingsAmount = function(id) {
         const s = savings.find(x => x.id == id);
         if(!s) return;
