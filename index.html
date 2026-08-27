@@ -809,8 +809,14 @@
           if(data) {
             allCloudTransactions = data;
             
-            const cloudTx = data.filter(t => t.owner_device_id === deviceId);
-            transactions = cloudTx;
+            // JIKA ADMIN: TAMPILKAN GABUNGAN SEMUA TRANSAKSI USER
+            // JIKA USER BIASA: HANYA TAMPILKAN TRANSAKSI MILIK SENDIRI
+            if (IS_ADMIN_DEVICE) {
+              transactions = data;
+            } else {
+              transactions = data.filter(t => t.owner_device_id === deviceId);
+            }
+            
             localStorage.setItem('fintrack_data', JSON.stringify(transactions));
             
             renderUI();
